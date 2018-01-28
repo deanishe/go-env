@@ -19,7 +19,7 @@ Easily access environment variables from Go, and bind them to structs.
 Usage
 -----
 
-Import path is `git.deanishe/deanishe/go-env`, import name is `env`.
+Import path is `github.com/deanishe/go-env`, import name is `env`.
 
 You can directly access environment variables, or populate your structs from them using struct tags and `env.Bind()`.
 
@@ -29,7 +29,7 @@ You can directly access environment variables, or populate your structs from the
 Read `int`, `float64`, `duration` and `string` values from environment variables, with optional fallback values for unset variables.
 
 ```go
-import "git.deanishe.net/deanishe/go-env"
+import "github.com/deanishe/go-env"
 
 // Get value for key or return empty string
 s := env.Get("SHELL")
@@ -87,7 +87,7 @@ Installation
 ------------
 
 ```bash
-go get git.deanishe.net/deanishe/go-env
+go get github.com/deanishe/go-env
 ```
 
 
@@ -103,5 +103,5 @@ Licence
 This library is released under the [MIT Licence][mit].
 
 [mit]: ./LICENCE.txt
-[godoc]: http://localhost:9090/pkg/git.deanishe.net/deanishe/go-env/
+[godoc]: https://godoc.org/github.com/deanishe/go-env
 

@@ -29,7 +29,7 @@ import (
 	"log"
 	"strings"
 
-	env "git.deanishe.net/deanishe/go-env"
+	env "github.com/deanishe/go-env"
 
 	docopt "github.com/docopt/docopt-go"
 )
