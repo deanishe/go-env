@@ -151,16 +151,44 @@ func ExampleBind() {
 	// false
 	// 20m0s
 
-	for _, k := range []string{
+	unsetEnv(
 		"HOSTNAME",
 		"USERNAME",
 		"PORT",
 		"USE_SSL",
 		"ONLINE",
-		"PING"} {
+		"PING",
+	)
+}
 
-		os.Unsetenv(k)
+// In contrast to the Get* functions, Bind treats empty variables
+// the same as unset ones and ignores them.
+func ExampleBind_emptyVars() {
+	type config struct {
+		Username string
+		Email    string
 	}
+
+	// Defaults
+	c := &config{
+		Username: "bob",
+		Email:    "bob@aol.com",
+	}
+
+	os.Setenv("USERNAME", "dave") // different value
+	os.Setenv("EMAIL", "")        // empty value, ignored by Bind()
+
+	// Bind config to environment
+	Bind(c)
+
+	fmt.Println(c.Username)
+	fmt.Println(c.Email)
+
+	// Output:
+	// dave
+	// bob@aol.com
+
+	unsetEnv("USERNAME", "EMAIL")
 }
 
 func TestExtract(t *testing.T) {
