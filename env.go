@@ -15,9 +15,8 @@ import (
 	"time"
 )
 
-var (
-	sysEnv *envReader
-)
+// Default reader, which reads from the system environment.
+var sysEnv *envReader
 
 func init() {
 	sysEnv = &envReader{&realEnv{}}

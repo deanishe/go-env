@@ -10,6 +10,7 @@ Easily access environment variables from Go, and bind them to structs.
 * [Usage](#usage)
     * [Access environment variables](#access-environment-variables)
     * [Binding](#binding)
+    * [Customisation](#customisation)
 * [Installation](#installation)
 * [Documentation](#documentation)
 * [Licence](#licence)
@@ -83,6 +84,27 @@ fmt.Printf("%v\n", c.Online)
 ```
 
 
+### Customisation ###
+
+Variables are retrieved via implementors of the `env.Env` interface (which `env.Bind()` accepts as a second, optional parameter):
+
+```go
+type Env interface {
+	// Lookup retrieves the value of the variable named by key.
+	//
+	// It follows the same semantics as os.LookupEnv(). If a variable
+	// is unset, the boolean will be false. If a variable is set, the
+	// boolean will be true, but the variable may still be an empty
+	// string.
+	Lookup(key string) (string, bool)
+}
+```
+
+So you can pass a custom `Env` implementation to `Bind()` in order to populate structs from a source other than environment variables.
+
+See [examples/docopt][docopt] to see how to implement a custom `Env` that populates a struct from `docopt` command-line options.
+
+
 Installation
 ------------
 
@@ -103,5 +125,6 @@ Licence
 This library is released under the [MIT Licence][mit].
 
 [mit]: ./LICENCE.txt
+[docopt]: ./examples/docopt/docopt_example.go
 [godoc]: https://godoc.org/github.com/deanishe/go-env
 

@@ -78,6 +78,18 @@ Add `env:"VARNAME"` to bind a field to the variable VARNAME:
 	}
 
 
+Customisation
+
+Variables are retrieved via implementors of the Env interface, which
+Bind() accepts as a second, optional parameter.
+
+So you can pass a custom Env implementation to Bind() to populate
+structs from a source other than environment variables.
+
+See examples/docopt to see a custom Env implementation used to
+populate a struct from docopt command-line options.
+
+
 Licence
 
 This library is released under the MIT Licence.
