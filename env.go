@@ -41,7 +41,9 @@ func GetString(key string, fallback ...string) string {
 // It accepts one optional "fallback" argument. If no
 // envvar is set, returns fallback or 0.
 //
-// Values are parsed with strconv.ParseInt().
+// Values are parsed with strconv.ParseInt(). If strconv.ParseInt()
+// fails, tries to parse the number with strconv.ParseFloat() and
+// truncate it to an int.
 func GetInt(key string, fallback ...int) int {
 
 	var fb int

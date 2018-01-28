@@ -65,7 +65,7 @@ func (bind *binding) Load() error {
 		}
 
 	}
-	return nil
+	return fmt.Errorf(`field "%s" not found`, bind.Name)
 }
 
 func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) error {

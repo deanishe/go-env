@@ -19,20 +19,24 @@ type testHost struct {
 	ID           string `env:"-"`
 	Hostname     string `env:"HOST"`
 	Online       bool
-	Port         int
+	Port         uint
+	Score        int
+	FreeSpace    int64         `env:"SPACE"`
 	PingInterval time.Duration `env:"PING"`
 	PingAverage  float64
 }
 
 var (
-	testID           = "uid34"
-	testHostname     = "test.example.com"
-	testOnline       = true
-	testPort         = 3000
-	testPingInterval = time.Second * 10
-	testPingAverage  = 4.5
+	testID                 = "uid34"
+	testHostname           = "test.example.com"
+	testOnline             = true
+	testPort         uint  = 3000
+	testScore              = 10000
+	testFreeSpace    int64 = 9876543210
+	testPingInterval       = time.Second * 10
+	testPingAverage        = 4.5
 	// How many visible, non-ignored fields are in testHost
-	fieldCount = 5
+	fieldCount = 7
 )
 
 var testEnv = Env{
@@ -40,6 +44,8 @@ var testEnv = Env{
 	"HOST":         testHostname,
 	"ONLINE":       fmt.Sprintf("%v", testOnline),
 	"PORT":         fmt.Sprintf("%d", testPort),
+	"SCORE":        fmt.Sprintf("%d", testScore),
+	"SPACE":        fmt.Sprintf("%d", testFreeSpace),
 	"PING":         fmt.Sprintf("%s", testPingInterval),
 	"PING_AVERAGE": fmt.Sprintf("%0.1f", testPingAverage),
 }
@@ -71,6 +77,14 @@ func TestBind(t *testing.T) {
 			t.Errorf("Bad Port. Expected=%v, Got=%v", testPort, th.Port)
 		}
 
+		if th.Score != testScore {
+			t.Errorf("Bad Score. Expected=%v, Got=%v", testScore, th.Score)
+		}
+
+		if th.FreeSpace != testFreeSpace {
+			t.Errorf("Bad FreeSpace. Expected=%v, Got=%v", testFreeSpace, th.FreeSpace)
+		}
+
 		if th.PingAverage != testPingAverage {
 			t.Errorf("Bad PingAverage. Expected=%v, Got=%v", testPingAverage, th.PingAverage)
 		}
@@ -79,6 +93,42 @@ func TestBind(t *testing.T) {
 			t.Errorf("Bad PingInterval. Expected=%v, Got=%v", testPingInterval, th.PingInterval)
 		}
 
+		// Bind to invalid type
+		sl := []string{}
+		if err := Bind(&sl); err == nil {
+			t.Error("Invalid Type accepted.")
+		}
+
+		// Unsupported field type
+		st := struct {
+			Host   string
+			Online []string // slices aren't supported
+		}{}
+
+		if err := Bind(&st); err == nil {
+			t.Error("Invalid field accepted.")
+		}
+
+		// Field not found error
+		st2 := struct {
+			Host string
+			Port uint
+		}{}
+
+		binds, err := extract(&st2)
+		if err != nil {
+			t.Fatalf("couldn't bind to struct: %v", err)
+		}
+		// Change field names
+		for _, bind := range binds {
+			bind.Name = bind.Name + "2"
+		}
+		// Fail to load fields
+		for _, bind := range binds {
+			if err := bind.Load(); err == nil {
+				t.Errorf("Accepted bad binding (%s)", bind.Name)
+			}
+		}
 	})
 }
 
@@ -138,6 +188,8 @@ func TestExtract(t *testing.T) {
 		"Hostname":     "HOST",
 		"Online":       "ONLINE",
 		"Port":         "PORT",
+		"Score":        "SCORE",
+		"FreeSpace":    "SPACE",
 		"PingInterval": "PING",
 		"PingAverage":  "PING_AVERAGE",
 	}
@@ -287,6 +339,7 @@ func TestSplitCamelCase(t *testing.T) {
 		in  string
 		out string
 	}{
+		{"", ""},
 		{"HomeAddress", "HOME_ADDRESS"},
 		{"homeAddress", "HOME_ADDRESS"},
 		{"loginURL", "LOGIN_URL"},

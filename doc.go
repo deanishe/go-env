@@ -48,6 +48,7 @@ Populate a struct from the environment by passing it to Bind():
 	}
 
 	fmt.Println(o.Hostname) // -> value of HOSTNAME environment variable
+	fmt.Println(o.Port)     // -> value of PORT environment variable
 
 Use tags to specify a variable name or ignore a field:
 

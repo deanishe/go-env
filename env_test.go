@@ -137,6 +137,7 @@ func TestGetInt(t *testing.T) {
 		"zero":  "0",
 		"float": "3.5",
 		"word":  "henry",
+		"empty": "",
 	}
 
 	data := []struct {
@@ -144,12 +145,21 @@ func TestGetInt(t *testing.T) {
 		fb  []int
 		out int
 	}{
+		// numbers
 		{"one", []int{}, 1},
 		{"two", []int{1}, 2},
-		{"five", []int{5}, 5},
 		{"zero", []int{}, 0},
+		{"zero", []int{2}, 0},
+		// empty values
+		{"empty", []int{}, 0},
+		{"empty", []int{5}, 5},
+		// non-existent values
+		{"five", []int{}, 0},
+		{"five", []int{5}, 5},
+		// invalid values
 		{"word", []int{}, 0},
 		{"word", []int{5}, 5},
+		// floats
 		{"float", []int{}, 3},
 		{"float", []int{5}, 3},
 	}
@@ -167,11 +177,32 @@ func TestGetInt(t *testing.T) {
 	})
 }
 
+// Getting int values with and without fallbacks.
+func ExampleGetInt() {
+	// Set some test variables
+	os.Setenv("PORT", "3000")
+	os.Setenv("PING_INTERVAL", "")
+
+	fmt.Println(GetInt("PORT"))
+	fmt.Println(GetInt("PORT", 5000))        // fallback is ignored
+	fmt.Println(GetInt("PING_INTERVAL"))     // returns zero value
+	fmt.Println(GetInt("PING_INTERVAL", 60)) // returns fallback
+	// Output:
+	// 3000
+	// 3000
+	// 0
+	// 60
+
+	os.Unsetenv("PORT")
+	os.Unsetenv("PING_INTERVAL")
+}
+
 func TestGetFloat(t *testing.T) {
 	env := Env{
 		"one.three": "1.3",
 		"two":       "2.0",
 		"zero":      "0",
+		"empty":     "",
 		"word":      "henry",
 	}
 
@@ -180,10 +211,18 @@ func TestGetFloat(t *testing.T) {
 		fb  []float64
 		out float64
 	}{
+		// numbers
 		{"one.three", []float64{}, 1.3},
 		{"two", []float64{1}, 2.0},
-		{"five", []float64{5.0}, 5.0},
 		{"zero", []float64{}, 0.0},
+		{"zero", []float64{3.0}, 0.0},
+		// empty
+		{"empty", []float64{}, 0.0},
+		{"empty", []float64{5.2}, 5.2},
+		// non-existent
+		{"five", []float64{}, 0.0},
+		{"five", []float64{5.0}, 5.0},
+		// invalid
 		{"word", []float64{}, 0.0},
 		{"word", []float64{5.0}, 5.0},
 	}
@@ -206,6 +245,7 @@ func TestGetDuration(t *testing.T) {
 		"5mins": "5m",
 		"1hour": "1h",
 		"zero":  "0",
+		"empty": "",
 		"word":  "henry",
 	}
 
@@ -214,10 +254,19 @@ func TestGetDuration(t *testing.T) {
 		fb  []time.Duration
 		out time.Duration
 	}{
+		// valid
 		{"5mins", []time.Duration{}, time.Minute * 5},
 		{"1hour", []time.Duration{time.Second * 1}, time.Hour * 1},
-		{"zero", []time.Duration{time.Second * 2}, 0},
+		// zero
 		{"zero", []time.Duration{}, 0},
+		{"zero", []time.Duration{time.Second * 2}, 0},
+		// empty
+		{"empty", []time.Duration{}, 0},
+		{"empty", []time.Duration{time.Second * 2}, time.Second * 2},
+		// unset
+		{"missing", []time.Duration{}, 0},
+		{"missing", []time.Duration{time.Second * 2}, time.Second * 2},
+		// invalid
 		{"word", []time.Duration{}, 0},
 		{"word", []time.Duration{time.Second * 5}, time.Second * 5},
 	}
@@ -233,6 +282,36 @@ func TestGetDuration(t *testing.T) {
 
 		}
 	})
+}
+
+// Durations are parsed using time.ParseDuration.
+func ExampleGetDuration() {
+	// Set some test variables
+	os.Setenv("DURATION_NAP", "20m")
+	os.Setenv("DURATION_EGG", "5m")
+	os.Setenv("DURATION_BIG_EGG", "")
+	os.Setenv("DURATION_MATCH", "1.5h")
+
+	// returns time.Duration
+	fmt.Println(GetDuration("DURATION_NAP"))
+	fmt.Println(GetDuration("DURATION_EGG") * 2)
+	// fallback with unset variable
+	fmt.Println(GetDuration("DURATION_POWERNAP", time.Minute*45))
+	// or an empty one
+	fmt.Println(GetDuration("DURATION_BIG_EGG", time.Minute*10))
+	fmt.Println(GetDuration("DURATION_MATCH").Minutes())
+
+	// Output:
+	// 20m0s
+	// 10m0s
+	// 45m0s
+	// 10m0s
+	// 90
+
+	os.Unsetenv("DURATION_NAP")
+	os.Unsetenv("DURATION_EGG")
+	os.Unsetenv("DURATION_BIG_EGG")
+	os.Unsetenv("DURATION_MATCH")
 }
 
 func TestGetBool(t *testing.T) {
@@ -252,14 +331,20 @@ func TestGetBool(t *testing.T) {
 		fb  []bool
 		out bool
 	}{
+		// valid
+		{"t", []bool{}, true},
+		{"f", []bool{true}, false},
+		{"1", []bool{}, true},
+		{"0", []bool{true}, false},
+		{"true", []bool{}, true},
+		{"false", []bool{true}, false},
+		// empty
 		{"empty", []bool{}, false},
 		{"empty", []bool{true}, true},
-		{"t", []bool{}, true},
-		{"f", []bool{}, false},
-		{"1", []bool{}, true},
-		{"0", []bool{}, false},
-		{"true", []bool{}, true},
-		{"false", []bool{}, false},
+		// missing
+		{"missing", []bool{}, false},
+		{"missing", []bool{true}, true},
+		// invalid
 		{"word", []bool{}, false},
 		{"word", []bool{true}, true},
 	}
