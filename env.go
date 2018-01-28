@@ -39,8 +39,10 @@ type Env interface {
 }
 
 // Get returns the value for envvar "key".
-// It accepts one optional "fallback" argument. If no
-// envvar is set, returns fallback or an empty string.
+// It accepts one optional "fallback" argument. If no envvar is set,
+// returns fallback or an empty string.
+//
+// If a variable is set, but empty, its value is used.
 func Get(key string, fallback ...string) string {
 	return sysEnv.Get(key, fallback...)
 }

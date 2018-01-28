@@ -25,8 +25,9 @@ func (env mapEnv) Lookup(key string) (string, bool) {
 
 func TestGet(t *testing.T) {
 	env := mapEnv{
-		"key":  "value",
-		"key2": "value2",
+		"key":   "value",
+		"key2":  "value2",
+		"empty": "",
 	}
 
 	data := []struct {
@@ -34,10 +35,15 @@ func TestGet(t *testing.T) {
 		fb  []string
 		out string
 	}{
+		// valid
 		{"key", []string{}, "value"},
 		{"key", []string{"value2"}, "value"},
 		{"key2", []string{}, "value2"},
 		{"key2", []string{"value"}, "value2"},
+		// empty
+		{"empty", []string{}, ""},
+		{"empty", []string{"dave"}, ""},
+		// unset
 		{"key3", []string{}, ""},
 		{"key3", []string{"bob"}, "bob"},
 	}
@@ -65,15 +71,15 @@ func TestGet(t *testing.T) {
 // Basic usage of Get. Returns an empty string if variable is unset.
 func ExampleGet() {
 	// Set some test variables
-	os.Setenv("test_name", "Bob Smith")
-	os.Setenv("test_address", "7, Dreary Lane")
+	os.Setenv("TEST_NAME", "Bob Smith")
+	os.Setenv("TEST_ADDRESS", "7, Dreary Lane")
 
-	fmt.Println(Get("test_name"))
-	fmt.Println(Get("test_address"))
-	fmt.Println(Get("test_nonexistent")) // unset variable
+	fmt.Println(Get("TEST_NAME"))
+	fmt.Println(Get("TEST_ADDRESS"))
+	fmt.Println(Get("TEST_NONEXISTENT")) // unset variable
 
 	// GetString is a synonym
-	fmt.Println(GetString("test_name"))
+	fmt.Println(GetString("TEST_NAME"))
 
 	// Output:
 	// Bob Smith
@@ -81,27 +87,28 @@ func ExampleGet() {
 	//
 	// Bob Smith
 
-	os.Unsetenv("test_name")
-	os.Unsetenv("test_address")
+	unsetEnv("TEST_NAME", "TEST_ADDRESS")
 }
 
 // The fallback value is returned if the variable is unset.
 func ExampleGet_fallback() {
 	// Set some test variables
-	os.Setenv("test_name", "Bob Smith")
-	os.Setenv("test_address", "7, Dreary Lane")
+	os.Setenv("TEST_NAME", "Bob Smith")
+	os.Setenv("TEST_ADDRESS", "7, Dreary Lane")
+	os.Setenv("TEST_EMAIL", "")
 
-	fmt.Println(Get("test_name", "default name"))       // fallback ignored
-	fmt.Println(Get("test_address", "default address")) // fallback ignored
-	fmt.Println(Get("test_nonexistent", "hi there!"))   // unset variable
+	fmt.Println(Get("TEST_NAME", "default name"))       // fallback ignored
+	fmt.Println(Get("TEST_ADDRESS", "default address")) // fallback ignored
+	fmt.Println(Get("TEST_EMAIL", "test@example.com"))  // fallback ignored (var is empty, not unset)
+	fmt.Println(Get("TEST_NONEXISTENT", "hi there!"))   // unset variable
 
 	// Output:
 	// Bob Smith
 	// 7, Dreary Lane
+	//
 	// hi there!
 
-	os.Unsetenv("test_name")
-	os.Unsetenv("test_address")
+	unsetEnv("TEST_NAME", "TEST_ADDRESS", "TEST_EMAIL")
 }
 
 func TestGetInt(t *testing.T) {
@@ -165,8 +172,7 @@ func ExampleGetInt() {
 	// 0
 	// 60
 
-	os.Unsetenv("PORT")
-	os.Unsetenv("PING_INTERVAL")
+	unsetEnv("PORT", "PING_INTERVAL")
 }
 
 func TestGetFloat(t *testing.T) {
@@ -224,8 +230,7 @@ func ExampleGetFloat() {
 	// 7.5
 	// 120.5
 
-	os.Unsetenv("TOTAL_SCORE")
-	os.Unsetenv("AVERAGE_SCORE")
+	unsetEnv("TOTAL_SCORE", "AVERAGE_SCORE")
 }
 
 func TestGetDuration(t *testing.T) {
@@ -295,10 +300,12 @@ func ExampleGetDuration() {
 	// 10m0s
 	// 90
 
-	os.Unsetenv("DURATION_NAP")
-	os.Unsetenv("DURATION_EGG")
-	os.Unsetenv("DURATION_BIG_EGG")
-	os.Unsetenv("DURATION_MATCH")
+	unsetEnv(
+		"DURATION_NAP",
+		"DURATION_EGG",
+		"DURATION_BIG_EGG",
+		"DURATION_MATCH",
+	)
 }
 
 func TestGetBool(t *testing.T) {
@@ -381,4 +388,20 @@ func ExampleGetBool() {
 	// false
 	// false
 	// true
+
+	unsetEnv(
+		"LIKE_PEAS",
+		"LIKE_CARROTS",
+		"LIKE_BEANS",
+		"LIKE_LIVER",
+		"LIKE_TOMATOES",
+		"LIKE_BVB",
+		"LIKE_BAYERN",
+	)
+}
+
+func unsetEnv(keys ...string) {
+	for _, key := range keys {
+		os.Unsetenv(key)
+	}
 }
