@@ -15,45 +15,16 @@ import (
 	"time"
 )
 
-// Env is a string: string mapping.
-type Env map[string]string
+// mapEnv is a string: string mapping that implements Env.
+type mapEnv map[string]string
 
-func withEnv(env Env, fn func(env Env)) {
-	var (
-		prev  = map[string]string{}
-		unset = map[string]bool{}
-	)
-
-	for k, v := range env {
-		if s, ok := os.LookupEnv(k); ok {
-			prev[k] = s
-		} else {
-			unset[k] = true
-		}
-
-		// Update env
-		os.Setenv(k, v)
-	}
-
-	// Ensure env is reset
-	defer func() {
-
-		for k, v := range prev {
-			os.Setenv(k, v)
-		}
-
-		for k := range unset {
-			os.Unsetenv(k)
-		}
-
-	}()
-
-	// Call function
-	fn(env)
+func (env mapEnv) Lookup(key string) (string, bool) {
+	s, ok := env[key]
+	return s, ok
 }
 
 func TestGet(t *testing.T) {
-	env := Env{
+	env := mapEnv{
 		"key":  "value",
 		"key2": "value2",
 	}
@@ -71,25 +42,24 @@ func TestGet(t *testing.T) {
 		{"key3", []string{"bob"}, "bob"},
 	}
 
-	withEnv(env, func(e Env) {
+	e := &envReader{env}
 
-		// Verify env is the same
-		for k, x := range env {
-			v := Get(k)
-			if v != x {
-				t.Errorf("Bad '%s'. Expected=%v, Got=%v", k, x, v)
-			}
+	// Verify env is the same
+	for k, x := range env {
+		v := e.Get(k)
+		if v != x {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", k, x, v)
+		}
+	}
+
+	// Test Get
+	for _, td := range data {
+		v := e.Get(td.key, td.fb...)
+		if v != td.out {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
 		}
 
-		// Test Get
-		for _, td := range data {
-			v := Get(td.key, td.fb...)
-			if v != td.out {
-				t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-			}
-
-		}
-	})
+	}
 }
 
 // Basic usage of Get. Returns an empty string if variable is unset.
@@ -102,10 +72,14 @@ func ExampleGet() {
 	fmt.Println(Get("test_address"))
 	fmt.Println(Get("test_nonexistent")) // unset variable
 
+	// GetString is a synonym
+	fmt.Println(GetString("test_name"))
+
 	// Output:
 	// Bob Smith
 	// 7, Dreary Lane
 	//
+	// Bob Smith
 
 	os.Unsetenv("test_name")
 	os.Unsetenv("test_address")
@@ -131,7 +105,7 @@ func ExampleGet_fallback() {
 }
 
 func TestGetInt(t *testing.T) {
-	env := Env{
+	env := mapEnv{
 		"one":   "1",
 		"two":   "2",
 		"zero":  "0",
@@ -164,17 +138,15 @@ func TestGetInt(t *testing.T) {
 		{"float", []int{5}, 3},
 	}
 
-	withEnv(env, func(e Env) {
-
-		// Test GetInt
-		for _, td := range data {
-			v := GetInt(td.key, td.fb...)
-			if v != td.out {
-				t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-			}
-
+	e := &envReader{env}
+	// Test GetInt
+	for _, td := range data {
+		v := e.GetInt(td.key, td.fb...)
+		if v != td.out {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
 		}
-	})
+
+	}
 }
 
 // Getting int values with and without fallbacks.
@@ -198,7 +170,7 @@ func ExampleGetInt() {
 }
 
 func TestGetFloat(t *testing.T) {
-	env := Env{
+	env := mapEnv{
 		"one.three": "1.3",
 		"two":       "2.0",
 		"zero":      "0",
@@ -227,21 +199,37 @@ func TestGetFloat(t *testing.T) {
 		{"word", []float64{5.0}, 5.0},
 	}
 
-	withEnv(env, func(e Env) {
-
-		// Test GetFloat
-		for _, td := range data {
-			v := GetFloat(td.key, td.fb...)
-			if v != td.out {
-				t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-			}
-
+	e := &envReader{env}
+	// Test GetFloat
+	for _, td := range data {
+		v := e.GetFloat(td.key, td.fb...)
+		if v != td.out {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
 		}
-	})
+
+	}
+}
+
+// Strings are parsed to floats using strconv.ParseFloat().
+func ExampleGetFloat() {
+	// Set some test variables
+	os.Setenv("TOTAL_SCORE", "172.3")
+	os.Setenv("AVERAGE_SCORE", "7.54")
+
+	fmt.Printf("%0.2f\n", GetFloat("TOTAL_SCORE"))
+	fmt.Printf("%0.1f\n", GetFloat("AVERAGE_SCORE"))
+	fmt.Println(GetFloat("NON_EXISTENT_SCORE", 120.5))
+	// Output:
+	// 172.30
+	// 7.5
+	// 120.5
+
+	os.Unsetenv("TOTAL_SCORE")
+	os.Unsetenv("AVERAGE_SCORE")
 }
 
 func TestGetDuration(t *testing.T) {
-	env := Env{
+	env := mapEnv{
 		"5mins": "5m",
 		"1hour": "1h",
 		"zero":  "0",
@@ -271,17 +259,16 @@ func TestGetDuration(t *testing.T) {
 		{"word", []time.Duration{time.Second * 5}, time.Second * 5},
 	}
 
-	withEnv(env, func(e Env) {
+	e := &envReader{env}
 
-		// Test GetDuration
-		for _, td := range data {
-			v := GetDuration(td.key, td.fb...)
-			if v != td.out {
-				t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-			}
-
+	// Test GetDuration
+	for _, td := range data {
+		v := e.GetDuration(td.key, td.fb...)
+		if v != td.out {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
 		}
-	})
+
+	}
 }
 
 // Durations are parsed using time.ParseDuration.
@@ -315,7 +302,7 @@ func ExampleGetDuration() {
 }
 
 func TestGetBool(t *testing.T) {
-	env := Env{
+	env := mapEnv{
 		"empty": "",
 		"t":     "t",
 		"f":     "f",
@@ -349,15 +336,49 @@ func TestGetBool(t *testing.T) {
 		{"word", []bool{true}, true},
 	}
 
-	withEnv(env, func(e Env) {
+	e := &envReader{env}
 
-		// Test GetBool
-		for _, td := range data {
-			v := GetBool(td.key, td.fb...)
-			if v != td.out {
-				t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-			}
-
+	// Test GetBool
+	for _, td := range data {
+		v := e.GetBool(td.key, td.fb...)
+		if v != td.out {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
 		}
-	})
+
+	}
+}
+
+// Strings are parsed using strconv.ParseBool().
+func ExampleGetBool() {
+
+	// Set some test variables
+	os.Setenv("LIKE_PEAS", "t")
+	os.Setenv("LIKE_CARROTS", "true")
+	os.Setenv("LIKE_BEANS", "1")
+	os.Setenv("LIKE_LIVER", "f")
+	os.Setenv("LIKE_TOMATOES", "0")
+	os.Setenv("LIKE_BVB", "false")
+	os.Setenv("LIKE_BAYERN", "FALSE")
+
+	// strconv.ParseBool() supports many formats
+	fmt.Println(GetBool("LIKE_PEAS"))
+	fmt.Println(GetBool("LIKE_CARROTS"))
+	fmt.Println(GetBool("LIKE_BEANS"))
+	fmt.Println(GetBool("LIKE_LIVER"))
+	fmt.Println(GetBool("LIKE_TOMATOES"))
+	fmt.Println(GetBool("LIKE_BVB"))
+	fmt.Println(GetBool("LIKE_BAYERN"))
+
+	// Fallback
+	fmt.Println(GetBool("LIKE_BEER", true))
+
+	// Output:
+	// true
+	// true
+	// true
+	// false
+	// false
+	// false
+	// false
+	// true
 }

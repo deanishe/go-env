@@ -25,9 +25,17 @@ import (
 //
 // Untagged fields have a default environment variable assigned to
 // them. See VarName() for details of how names are generated.
-func Bind(v interface{}) error {
+//
+// Bind accepts an optional Env argument. If provided, values will
+// be looked up via that Env instead of the program's environment.
+func Bind(v interface{}, env ...Env) error {
 
-	binds, err := extract(v)
+	e := sysEnv // default env
+	if len(env) > 0 {
+		e = &envReader{env[0]}
+	}
+
+	binds, err := extract(v, e)
 	if err != nil {
 		return err
 	}
@@ -47,6 +55,7 @@ type binding struct {
 	EnvVar string
 	Target interface{}
 	Kind   reflect.Kind
+	env    *envReader
 }
 
 // Load populates the target struct from the environment.
@@ -60,12 +69,17 @@ func (bind *binding) Load() error {
 		field := typ.Field(i)
 		value := rv.Field(i)
 
-		if field.Name == bind.Name && Get(bind.EnvVar) != "" {
+		if field.Name == bind.Name {
+			// Ignore empty/unset fields
+			if bind.env.Get(bind.EnvVar) == "" {
+				return nil
+			}
+
 			return bind.setField(&field, &value)
 		}
 
 	}
-	return fmt.Errorf(`field "%s" not found`, bind.Name)
+	return fmt.Errorf("unknown field: %s", bind.Name)
 }
 
 func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) error {
@@ -73,13 +87,13 @@ func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) err
 	switch bind.Kind {
 
 	case reflect.Bool:
-		b := GetBool(bind.EnvVar)
+		b := bind.env.GetBool(bind.EnvVar)
 		reflect.Indirect(*rv).SetBool(b)
 		// log.Printf("[%s] value=%v", bind.Name, b)
 
 	case reflect.String:
 
-		s := GetString(bind.EnvVar)
+		s := bind.env.GetString(bind.EnvVar)
 		reflect.Indirect(*rv).SetString(s)
 		// log.Printf("[%s] value=%s", bind.Name, s)
 
@@ -88,11 +102,11 @@ func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) err
 
 		// Try to parse value as an int, and if that fails, try
 		// to parse it as a duration.
-		s := GetString(bind.EnvVar)
+		s := bind.env.GetString(bind.EnvVar)
 
 		if _, err := strconv.ParseInt(s, 10, 64); err == nil {
 
-			i := GetInt(bind.EnvVar)
+			i := bind.env.GetInt(bind.EnvVar)
 			reflect.Indirect(*rv).SetInt(int64(i))
 
 		} else {
@@ -105,19 +119,19 @@ func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) err
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 
-		i := GetInt(bind.EnvVar)
+		i := bind.env.GetInt(bind.EnvVar)
 		reflect.Indirect(*rv).SetInt(int64(i))
 		// log.Printf("[%s] value=%d", bind.Name, i)
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
-		i := GetInt(bind.EnvVar)
+		i := bind.env.GetInt(bind.EnvVar)
 		reflect.Indirect(*rv).SetUint(uint64(i))
 		// log.Printf("[%s] value=%d", bind.Name, i)
 
 	case reflect.Float32, reflect.Float64:
 
-		n := GetFloat(bind.EnvVar)
+		n := bind.env.GetFloat(bind.EnvVar)
 		reflect.Indirect(*rv).SetFloat(n)
 		// log.Printf("[%s] value=%f", bind.Name, n)
 
@@ -129,7 +143,7 @@ func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) err
 
 }
 
-func extract(v interface{}) ([]*binding, error) {
+func extract(v interface{}, env *envReader) ([]*binding, error) {
 
 	var binds []*binding
 
@@ -175,6 +189,7 @@ func extract(v interface{}) ([]*binding, error) {
 			EnvVar: varname,
 			Target: v,
 			Kind:   field.Type.Kind(),
+			env:    env,
 		}
 		binds = append(binds, bind)
 

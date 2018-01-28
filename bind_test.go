@@ -39,7 +39,7 @@ var (
 	fieldCount = 7
 )
 
-var testEnv = Env{
+var testEnv = mapEnv{
 	"ID":           "not empty",
 	"HOST":         testHostname,
 	"ONLINE":       fmt.Sprintf("%v", testOnline),
@@ -52,84 +52,61 @@ var testEnv = Env{
 
 func TestBind(t *testing.T) {
 
-	withEnv(testEnv, func(e Env) {
+	th := &testHost{}
 
-		th := &testHost{}
+	// Bind to the environment
+	if err := Bind(th, testEnv); err != nil {
+		t.Fatalf("couldn't bind testHost: %v", err)
+	}
 
-		// Bind to the environment
-		if err := Bind(th); err != nil {
-			t.Fatalf("couldn't bind testHost: %v", err)
-		}
+	if th.ID != "" {
+		t.Errorf("Non-empty ID. Got=%v", th.ID)
+	}
 
-		if th.ID != "" {
-			t.Errorf("Non-empty ID. Got=%v", th.ID)
-		}
+	if th.Hostname != testHostname {
+		t.Errorf("Bad Hostname. Expected=%v, Got=%v", testHostname, th.Hostname)
+	}
 
-		if th.Hostname != testHostname {
-			t.Errorf("Bad Hostname. Expected=%v, Got=%v", testHostname, th.Hostname)
-		}
+	if th.Online != testOnline {
+		t.Errorf("Bad Online. Expected=%v, Got=%v", testOnline, th.Online)
+	}
 
-		if th.Online != testOnline {
-			t.Errorf("Bad Online. Expected=%v, Got=%v", testOnline, th.Online)
-		}
+	if th.Port != testPort {
+		t.Errorf("Bad Port. Expected=%v, Got=%v", testPort, th.Port)
+	}
 
-		if th.Port != testPort {
-			t.Errorf("Bad Port. Expected=%v, Got=%v", testPort, th.Port)
-		}
+	if th.Score != testScore {
+		t.Errorf("Bad Score. Expected=%v, Got=%v", testScore, th.Score)
+	}
 
-		if th.Score != testScore {
-			t.Errorf("Bad Score. Expected=%v, Got=%v", testScore, th.Score)
-		}
+	if th.FreeSpace != testFreeSpace {
+		t.Errorf("Bad FreeSpace. Expected=%v, Got=%v", testFreeSpace, th.FreeSpace)
+	}
 
-		if th.FreeSpace != testFreeSpace {
-			t.Errorf("Bad FreeSpace. Expected=%v, Got=%v", testFreeSpace, th.FreeSpace)
-		}
+	if th.PingAverage != testPingAverage {
+		t.Errorf("Bad PingAverage. Expected=%v, Got=%v", testPingAverage, th.PingAverage)
+	}
 
-		if th.PingAverage != testPingAverage {
-			t.Errorf("Bad PingAverage. Expected=%v, Got=%v", testPingAverage, th.PingAverage)
-		}
+	if th.PingInterval != testPingInterval {
+		t.Errorf("Bad PingInterval. Expected=%v, Got=%v", testPingInterval, th.PingInterval)
+	}
 
-		if th.PingInterval != testPingInterval {
-			t.Errorf("Bad PingInterval. Expected=%v, Got=%v", testPingInterval, th.PingInterval)
-		}
+	// Bind to invalid type
+	sl := []string{}
+	if err := Bind(&sl); err == nil {
+		t.Error("Invalid Type accepted.")
+	}
 
-		// Bind to invalid type
-		sl := []string{}
-		if err := Bind(&sl); err == nil {
-			t.Error("Invalid Type accepted.")
-		}
+	// Unsupported field type
+	st := struct {
+		Host   string
+		Online []string // slices aren't supported
+	}{}
 
-		// Unsupported field type
-		st := struct {
-			Host   string
-			Online []string // slices aren't supported
-		}{}
+	if err := Bind(&st, testEnv); err == nil {
+		t.Error("Invalid field accepted.")
+	}
 
-		if err := Bind(&st); err == nil {
-			t.Error("Invalid field accepted.")
-		}
-
-		// Field not found error
-		st2 := struct {
-			Host string
-			Port uint
-		}{}
-
-		binds, err := extract(&st2)
-		if err != nil {
-			t.Fatalf("couldn't bind to struct: %v", err)
-		}
-		// Change field names
-		for _, bind := range binds {
-			bind.Name = bind.Name + "2"
-		}
-		// Fail to load fields
-		for _, bind := range binds {
-			if err := bind.Load(); err == nil {
-				t.Errorf("Accepted bad binding (%s)", bind.Name)
-			}
-		}
-	})
 }
 
 // Populate a struct from environment variables.
@@ -137,15 +114,17 @@ func ExampleBind() {
 
 	// Simple configuration struct
 	type config struct {
-		HostName     string        `env:"HOSTNAME"` // default = HOST_NAME
-		SSL          bool          `env:"USE_SSL"`  // default = SSL
+		HostName     string        `env:"HOSTNAME"` // default: HOST_NAME
+		UserName     string        `env:"USERNAME"` // default: USER_NAME
+		SSL          bool          `env:"USE_SSL"`  // default: SSL
 		Port         int           // leave as default (PORT)
-		PingInterval time.Duration `env:"PING"` // default = PING_INTERVAL
+		PingInterval time.Duration `env:"PING"` // default: PING_INTERVAL
 		Online       bool          `env:"-"`    // ignore this field
 	}
 
 	// Set some values in the environment for test purposes
 	os.Setenv("HOSTNAME", "api.example.com")
+	os.Setenv("USERNAME", "") // empty
 	os.Setenv("PORT", "443")
 	os.Setenv("USE_SSL", "1")
 	os.Setenv("PING", "5m")
@@ -159,12 +138,14 @@ func ExampleBind() {
 
 	// config struct now populated from the environment
 	fmt.Println(c.HostName)
+	fmt.Println(c.UserName)
 	fmt.Printf("%d\n", c.Port)
 	fmt.Printf("%v\n", c.SSL)
 	fmt.Printf("%v\n", c.Online)
 	fmt.Printf("%v\n", c.PingInterval*4) // it's not a string!
 	// Output:
 	// api.example.com
+	//
 	// 443
 	// true
 	// false
@@ -172,6 +153,7 @@ func ExampleBind() {
 
 	for _, k := range []string{
 		"HOSTNAME",
+		"USERNAME",
 		"PORT",
 		"USE_SSL",
 		"ONLINE",
@@ -194,7 +176,7 @@ func TestExtract(t *testing.T) {
 		"PingAverage":  "PING_AVERAGE",
 	}
 
-	binds, err := extract(th)
+	binds, err := extract(th, sysEnv)
 	if err != nil {
 		t.Fatalf("couldn't extract testHost: %v", err)
 	}
@@ -211,6 +193,27 @@ func TestExtract(t *testing.T) {
 
 	if err := testMapsEqual(x, data); err != nil {
 		t.Fatalf("extract failed: %v", err)
+	}
+
+	// Field not found error
+	st := struct {
+		Host string
+		Port uint
+	}{}
+
+	binds, err = extract(&st, sysEnv)
+	if err != nil {
+		t.Fatalf("couldn't bind to struct: %v", err)
+	}
+	// Change field names
+	for _, bind := range binds {
+		bind.Name = bind.Name + "2"
+	}
+	// Fail to load fields
+	for _, bind := range binds {
+		if err := bind.Load(); err == nil {
+			t.Errorf("Accepted bad binding (%s)", bind.Name)
+		}
 	}
 }
 
