@@ -15,9 +15,6 @@ import (
 	"time"
 )
 
-// Env is a string: string mapping.
-type Env map[string]string
-
 // Get returns the value for envvar "key".
 // It accepts one optional "fallback" argument. If no
 // envvar is set, returns fallback or an empty string.
@@ -43,6 +40,8 @@ func GetString(key string, fallback ...string) string {
 // GetInt returns the value for envvar "key" as an int.
 // It accepts one optional "fallback" argument. If no
 // envvar is set, returns fallback or 0.
+//
+// Values are parsed with strconv.ParseInt().
 func GetInt(key string, fallback ...int) int {
 
 	var fb int
@@ -67,7 +66,9 @@ func GetInt(key string, fallback ...int) int {
 
 // GetFloat returns the value for envvar "key" as a float.
 // It accepts one optional "fallback" argument. If no
-// envvar is set, returns fallback or 0.
+// envvar is set, returns fallback or 0.0.
+//
+// Values are parsed with strconv.ParseFloat().
 func GetFloat(key string, fallback ...float64) float64 {
 
 	var fb float64
@@ -93,6 +94,8 @@ func GetFloat(key string, fallback ...float64) float64 {
 // GetDuration returns the value for envvar "key" as a time.Duration.
 // It accepts one optional "fallback" argument. If no
 // envvar is set, returns fallback or 0.
+//
+// Values are parsed with time.ParseDuration().
 func GetDuration(key string, fallback ...time.Duration) time.Duration {
 
 	var fb time.Duration
@@ -117,7 +120,9 @@ func GetDuration(key string, fallback ...time.Duration) time.Duration {
 
 // GetBool returns the value for envvar "key" as a boolean.
 // It accepts one optional "fallback" argument. If no
-// envvar is set, returns fallback or 0.
+// envvar is set, returns fallback or false.
+//
+// Values are parsed with strconv.ParseBool().
 func GetBool(key string, fallback ...bool) bool {
 
 	var fb bool

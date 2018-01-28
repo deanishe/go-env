@@ -11,14 +11,20 @@ package env
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 )
 
 // Bind populates the fields of a struct from environment variables.
-// Variables are mapped to fields using `env:"..."` tags.
+//
+// Variables are mapped to fields using `env:"..."` tags, and the
+// struct is populated by passing it to Bind(). Unset or empty
+// environment variables are ignored.
+//
+// Untagged fields have a default environment variable assigned to
+// them. See VarName() for details of how names are generated.
 func Bind(v interface{}) error {
 
 	binds, err := extract(v)
@@ -35,18 +41,16 @@ func Bind(v interface{}) error {
 	return nil
 }
 
-// Binding links an environment variable to the field of a struct.
-type Binding struct {
-	Name       string
-	EnvVar     string
-	FieldValue reflect.Value
-	Field      reflect.Type
-	Target     interface{}
-	Kind       reflect.Kind
+// binding links an environment variable to the field of a struct.
+type binding struct {
+	Name   string
+	EnvVar string
+	Target interface{}
+	Kind   reflect.Kind
 }
 
 // Load populates the target struct from the environment.
-func (bind *Binding) Load() error {
+func (bind *binding) Load() error {
 
 	rv := reflect.Indirect(reflect.ValueOf(bind.Target))
 	typ := rv.Type()
@@ -64,7 +68,7 @@ func (bind *Binding) Load() error {
 	return nil
 }
 
-func (bind *Binding) setField(field *reflect.StructField, rv *reflect.Value) error {
+func (bind *binding) setField(field *reflect.StructField, rv *reflect.Value) error {
 
 	switch bind.Kind {
 
@@ -125,9 +129,9 @@ func (bind *Binding) setField(field *reflect.StructField, rv *reflect.Value) err
 
 }
 
-func extract(v interface{}) ([]*Binding, error) {
+func extract(v interface{}) ([]*binding, error) {
 
-	var binds []*Binding
+	var binds []*binding
 
 	ref := reflect.ValueOf(v)
 
@@ -163,10 +167,10 @@ func extract(v interface{}) ([]*Binding, error) {
 		if tag != "" {
 			varname = tag
 		} else {
-			varname = envName(name)
+			varname = VarName(name)
 		}
 
-		bind := &Binding{
+		bind := &binding{
 			Name:   name,
 			EnvVar: varname,
 			Target: v,
@@ -179,46 +183,72 @@ func extract(v interface{}) ([]*Binding, error) {
 	return binds, nil
 }
 
-func envName(name string) string {
-	words := splitName(name)
-	for i, s := range words {
-		words[i] = strings.ToUpper(s)
+// VarName generates an environment variable name from a field name.
+// This is documented to show how the automatic names are generated.
+func VarName(name string) string {
+	if !isCamelCase(name) {
+		return strings.ToUpper(name)
 	}
-	return strings.Join(words, "_")
+	return splitCamelCase(name)
 }
 
-func splitName(name string) []string {
+func isCamelCase(s string) bool {
+	if ok, _ := regexp.MatchString(".*[a-z]+[0-9_]*[A-Z]+.*", s); ok {
+		return true
+	}
+	if ok, _ := regexp.MatchString("[A-Z][A-Z][A-Z]+[0-9_]*[a-z]+.*", s); ok {
+		return true
+	}
+	return false
+}
+
+func splitCamelCase(name string) string {
 
 	var (
-		consumeUpper bool
-		s            string
-		words        []string
+		i     int
+		re    *regexp.Regexp
+		rest  string
+		words []string
 	)
 
-	for _, r := range name {
+	rest = name
 
-		if unicode.IsUpper(r) {
-
-			if consumeUpper {
-				s += string(r)
-			} else if s != "" {
-				words = append(words, strings.ToLower(s))
-				s = string(r)
-			} else {
-				s += string(r)
-			}
-
-			consumeUpper = true
-			continue
+	// Start with 3 or more capital letters.
+	re = regexp.MustCompile("[A-Z]+([A-Z])[0-9]*[a-z]")
+	for {
+		if idx := re.FindStringSubmatchIndex(rest); idx != nil {
+			i = idx[2]
+			s := rest[:i]
+			rest = rest[i:]
+			words = append(words, s)
+		} else {
+			break
 		}
-
-		consumeUpper = false
-		s += string(r)
 	}
 
-	if s != "" {
-		words = append(words, strings.ToLower(s))
+	re = regexp.MustCompile("[a-z][0-9_]*([A-Z])")
+	for {
+
+		if idx := re.FindStringSubmatchIndex(rest); idx != nil {
+			i = idx[2]
+			s := rest[idx[2]:idx[3]]
+
+			s = rest[:i]
+			rest = rest[i:]
+			words = append(words, s)
+		} else {
+			break
+		}
 	}
 
-	return words
+	if rest != "" {
+		words = append(words, rest)
+	}
+
+	if len(words) > 0 {
+		s := strings.ToUpper(strings.Join(words, "_"))
+		return s
+	}
+
+	return ""
 }

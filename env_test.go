@@ -9,10 +9,14 @@
 package env
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
 )
+
+// Env is a string: string mapping.
+type Env map[string]string
 
 func withEnv(env Env, fn func(env Env)) {
 	var (
@@ -86,6 +90,44 @@ func TestGet(t *testing.T) {
 
 		}
 	})
+}
+
+// Basic usage of Get. Returns an empty string if variable is unset.
+func ExampleGet() {
+	// Set some test variables
+	os.Setenv("test_name", "Bob Smith")
+	os.Setenv("test_address", "7, Dreary Lane")
+
+	fmt.Println(Get("test_name"))
+	fmt.Println(Get("test_address"))
+	fmt.Println(Get("test_nonexistent")) // unset variable
+
+	// Output:
+	// Bob Smith
+	// 7, Dreary Lane
+	//
+
+	os.Unsetenv("test_name")
+	os.Unsetenv("test_address")
+}
+
+// The fallback value is returned if the variable is unset.
+func ExampleGet_fallback() {
+	// Set some test variables
+	os.Setenv("test_name", "Bob Smith")
+	os.Setenv("test_address", "7, Dreary Lane")
+
+	fmt.Println(Get("test_name", "default name"))       // fallback ignored
+	fmt.Println(Get("test_address", "default address")) // fallback ignored
+	fmt.Println(Get("test_nonexistent", "hi there!"))   // unset variable
+
+	// Output:
+	// Bob Smith
+	// 7, Dreary Lane
+	// hi there!
+
+	os.Unsetenv("test_name")
+	os.Unsetenv("test_address")
 }
 
 func TestGetInt(t *testing.T) {

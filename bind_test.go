@@ -10,6 +10,7 @@ package env
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 )
@@ -81,6 +82,55 @@ func TestBind(t *testing.T) {
 	})
 }
 
+// Populate a struct from environment variables.
+func ExampleBind() {
+
+	// Simple configuration struct
+	type config struct {
+		HostName     string        `env:"HOSTNAME"` // default = HOST_NAME
+		SSL          bool          `env:"USE_SSL"`  // default = SSL
+		Port         int           // leave as default (PORT)
+		PingInterval time.Duration `env:"PING"` // default = PING_INTERVAL
+		Online       bool          `env:"-"`    // ignore this field
+	}
+
+	// Set some values in the environment for test purposes
+	os.Setenv("HOSTNAME", "api.example.com")
+	os.Setenv("PORT", "443")
+	os.Setenv("USE_SSL", "1")
+	os.Setenv("PING", "5m")
+	os.Setenv("ONLINE", "1") // will be ignored
+
+	// Create a config and bind it to the environment
+	c := &config{}
+	if err := Bind(c); err != nil {
+		// handle error...
+	}
+
+	// config struct now populated from the environment
+	fmt.Println(c.HostName)
+	fmt.Printf("%d\n", c.Port)
+	fmt.Printf("%v\n", c.SSL)
+	fmt.Printf("%v\n", c.Online)
+	fmt.Printf("%v\n", c.PingInterval*4) // it's not a string!
+	// Output:
+	// api.example.com
+	// 443
+	// true
+	// false
+	// 20m0s
+
+	for _, k := range []string{
+		"HOSTNAME",
+		"PORT",
+		"USE_SSL",
+		"ONLINE",
+		"PING"} {
+
+		os.Unsetenv(k)
+	}
+}
+
 func TestExtract(t *testing.T) {
 
 	th := &testHost{}
@@ -112,50 +162,65 @@ func TestExtract(t *testing.T) {
 	}
 }
 
-// TestEnvName tests the envvar name algorithm.
-func TestEnvName(t *testing.T) {
+// TestVarName tests the envvar name algorithm.
+func TestVarName(t *testing.T) {
 	data := []struct {
 		in, out string
 	}{
 		{"URL", "URL"},
 		{"Name", "NAME"},
 		{"LastName", "LAST_NAME"},
-		{"URLEncoding", "URLENCODING"},
+		{"URLEncoding", "URL_ENCODING"},
 		{"LongBeard", "LONG_BEARD"},
 		{"HTML", "HTML"},
 		{"etc", "ETC"},
 	}
 
 	for _, td := range data {
-		v := envName(td.in)
+		v := VarName(td.in)
 		if v != td.out {
-			t.Errorf("Bad EnvName (%s).Expected=%v, Got=%v",
+			t.Errorf("Bad VarName (%s). Expected=%v, Got=%v",
 				td.in, td.out, v)
 		}
 	}
 }
 
-// TestSplitName tests the name-splitting algorithm.
-func TestSplitName(t *testing.T) {
-	data := []struct {
-		in  string
-		out []string
-	}{
-		{"URL", []string{"url"}},
-		{"Name", []string{"name"}},
-		{"LastName", []string{"last", "name"}},
-		{"URLEncoding", []string{"urlencoding"}},
-		{"LongBeard", []string{"long", "beard"}},
-		{"HTML", []string{"html"}},
-	}
-
-	for _, td := range data {
-		v := splitName(td.in)
-		if !slicesEqual(td.out, v) {
-			t.Errorf("Bad Split (%s). Expected=%v, Got=%v",
-				td.in, td.out, v)
-		}
-	}
+// Example output of VarName.
+func ExampleVarName() {
+	// single-case words are upper-cased
+	fmt.Println(VarName("URL"))
+	fmt.Println(VarName("name"))
+	// words that start with fewer than 3 uppercase chars are
+	// upper-cased
+	fmt.Println(VarName("Folder"))
+	fmt.Println(VarName("MTime"))
+	// but with 3+ uppercase chars, the last is treated as the first
+	// char of the next word
+	fmt.Println(VarName("VIPath"))
+	fmt.Println(VarName("URLEncoding"))
+	fmt.Println(VarName("SSLPort"))
+	// camel-case words are split on the case changes
+	fmt.Println(VarName("LastName"))
+	fmt.Println(VarName("LongHorse"))
+	fmt.Println(VarName("loginURL"))
+	fmt.Println(VarName("newHomeAddress"))
+	fmt.Println(VarName("PointA"))
+	// digits are considered as the end of a word, not the start
+	fmt.Println(VarName("b2B"))
+	// Output:
+	// URL
+	// NAME
+	// FOLDER
+	// MTIME
+	// VI_PATH
+	// URL_ENCODING
+	// SSL_PORT
+	// LAST_NAME
+	// LONG_HORSE
+	// LOGIN_URL
+	// NEW_HOME_ADDRESS
+	// POINT_A
+	// B2_B
 }
 
 func slicesEqual(one, two []string) bool {
@@ -187,4 +252,59 @@ func testMapsEqual(a, b map[string]string) error {
 	}
 
 	return nil
+}
+
+func TestIsCamelCase(t *testing.T) {
+	data := []struct {
+		s string
+		v bool
+	}{
+		{"", false},
+		{"URL", false},
+		{"url", false},
+		{"Url", false},
+		{"HomeAddress", true},
+		{"myHomeAddress", true},
+		{"PlaceA", true},
+		{"myPlaceB", true},
+		{"myB", true},
+		{"my2B", true},
+		{"B2B", false},
+		{"SSLPort", true},
+	}
+
+	for _, td := range data {
+		b := isCamelCase(td.s)
+		if b != td.v {
+			t.Errorf("Bad CamelCase (%s). Expected=%v, Got=%v", td.s, td.v, b)
+		}
+
+	}
+}
+
+func TestSplitCamelCase(t *testing.T) {
+	data := []struct {
+		in  string
+		out string
+	}{
+		{"HomeAddress", "HOME_ADDRESS"},
+		{"homeAddress", "HOME_ADDRESS"},
+		{"loginURL", "LOGIN_URL"},
+		{"SSLPort", "SSL_PORT"},
+		{"HomeAddress", "HOME_ADDRESS"},
+		{"myHomeAddress", "MY_HOME_ADDRESS"},
+		{"PlaceA", "PLACE_A"},
+		{"myPlaceB", "MY_PLACE_B"},
+		{"myB", "MY_B"},
+		{"my2B", "MY2_B"},
+		{"URLEncoding", "URL_ENCODING"},
+	}
+
+	for _, td := range data {
+		s := splitCamelCase(td.in)
+		if s != td.out {
+			t.Errorf("Bad SplitCamel (%s). Expected=%v, Got=%v", td.in, td.out, s)
+		}
+
+	}
 }
