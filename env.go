@@ -25,9 +25,10 @@ func init() {
 
 // Env is the datasource for bindings and lookup. It is an optional
 // parameter to Bind(). By specifying a custom Env, it's possible
-// to populate a struct from an alternative source. For example,
-// you could write an adapter to bind a struct to a docopt.Opts
-// struct.
+// to populate a struct from an alternative source.
+//
+// The demo program in examples/docopt implements a custom Env
+// to populate a struct from docopt options via Bind().
 type Env interface {
 	// Lookup retrieves the value of the variable named by key.
 	//
