@@ -63,6 +63,17 @@ func GetInt(key string, fallback ...int) int {
 	return sysEnv.GetInt(key, fallback...)
 }
 
+// GetUint returns the value for envvar "key" as an int.
+// It accepts one optional "fallback" argument. If no
+// envvar is set, returns fallback or 0.
+//
+// Values are parsed with strconv.ParseUint(). If strconv.ParseUint()
+// fails, tries to parse the number with strconv.ParseFloat() and
+// truncate it to a uint.
+func GetUint(key string, fallback ...uint) uint {
+	return sysEnv.GetUint(key, fallback...)
+}
+
 // GetFloat returns the value for envvar "key" as a float.
 // It accepts one optional "fallback" argument. If no
 // envvar is set, returns fallback or 0.0.
@@ -140,6 +151,28 @@ func (r *envReader) GetInt(key string, fallback ...int) int {
 	}
 
 	return int(i)
+}
+
+func (r *envReader) GetUint(key string, fallback ...uint) uint {
+
+	var fb uint
+
+	if len(fallback) > 0 {
+		fb = fallback[0]
+	}
+	s, ok := r.env.Lookup(key)
+	if !ok {
+		return fb
+	}
+
+	// log.Printf("[env] %s=%s", key, s)
+
+	i, err := parseUint(s)
+	if err != nil {
+		return fb
+	}
+
+	return uint(i)
 }
 
 func (r *envReader) GetFloat(key string, fallback ...float64) float64 {
@@ -221,4 +254,20 @@ func parseInt(s string) (int, error) {
 		return 0, fmt.Errorf("invalid int: %v", s)
 	}
 	return int(n), nil
+}
+
+// parse an int, falling back to parsing it as a float
+func parseUint(s string) (uint, error) {
+	if i, err := strconv.ParseUint(s, 10, 32); err == nil {
+		return uint(i), nil
+	}
+
+	// Try to parse as float, then convert
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		if f < 0 {
+			return 0, fmt.Errorf("less than zero: %s", s)
+		}
+		return uint(f), nil
+	}
+	return 0, fmt.Errorf("invalid int: %v", s)
 }

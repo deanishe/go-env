@@ -113,12 +113,14 @@ func ExampleGet_fallback() {
 
 func TestGetInt(t *testing.T) {
 	env := mapEnv{
-		"one":   "1",
-		"two":   "2",
-		"zero":  "0",
-		"float": "3.5",
-		"word":  "henry",
-		"empty": "",
+		"one":            "1",
+		"two":            "2",
+		"zero":           "0",
+		"float":          "3.5",
+		"word":           "henry",
+		"empty":          "",
+		"negative":       "-1",
+		"negative_float": "-3.5",
 	}
 
 	data := []struct {
@@ -143,6 +145,8 @@ func TestGetInt(t *testing.T) {
 		// floats
 		{"float", []int{}, 3},
 		{"float", []int{5}, 3},
+		{"negative", []int{}, -1},
+		{"negative_float", []int{5}, -3},
 	}
 
 	e := &envReader{env}
@@ -166,6 +170,74 @@ func ExampleGetInt() {
 	fmt.Println(GetInt("PORT", 5000))        // fallback is ignored
 	fmt.Println(GetInt("PING_INTERVAL"))     // returns zero value
 	fmt.Println(GetInt("PING_INTERVAL", 60)) // returns fallback
+	// Output:
+	// 3000
+	// 3000
+	// 0
+	// 60
+
+	unsetEnv("PORT", "PING_INTERVAL")
+}
+
+func TestGetUint(t *testing.T) {
+	env := mapEnv{
+		"one":            "1",
+		"two":            "2",
+		"zero":           "0",
+		"float":          "3.5",
+		"word":           "henry",
+		"empty":          "",
+		"negative":       "-1",
+		"negative_float": "-3.5",
+	}
+
+	data := []struct {
+		key string
+		fb  []uint
+		out uint
+	}{
+		// numbers
+		{"one", []uint{}, 1},
+		{"two", []uint{1}, 2},
+		{"zero", []uint{}, 0},
+		{"zero", []uint{2}, 0},
+		// empty values
+		{"empty", []uint{}, 0},
+		{"empty", []uint{5}, 5},
+		// non-existent values
+		{"five", []uint{}, 0},
+		{"five", []uint{5}, 5},
+		// invalid values
+		{"word", []uint{}, 0},
+		{"word", []uint{5}, 5},
+		{"negative", []uint{}, 0},
+		{"negative_float", []uint{5}, 5},
+		// floats
+		{"float", []uint{}, 3},
+		{"float", []uint{5}, 3},
+	}
+
+	e := &envReader{env}
+	// Test GetInt
+	for _, td := range data {
+		v := e.GetUint(td.key, td.fb...)
+		if v != td.out {
+			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
+		}
+
+	}
+}
+
+// Getting int values with and without fallbacks.
+func ExampleGetUint() {
+	// Set some test variables
+	os.Setenv("PORT", "3000")
+	os.Setenv("PING_INTERVAL", "")
+
+	fmt.Println(GetUint("PORT"))
+	fmt.Println(GetUint("PORT", 5000))        // fallback is ignored
+	fmt.Println(GetUint("PING_INTERVAL"))     // returns zero value
+	fmt.Println(GetUint("PING_INTERVAL", 60)) // returns fallback
 	// Output:
 	// 3000
 	// 3000
