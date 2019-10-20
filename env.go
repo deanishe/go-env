@@ -1,10 +1,5 @@
-//
 // Copyright (c) 2018 Dean Jackson <deanishe@deanishe.net>
-//
-// MIT Licence. See http://opensource.org/licenses/MIT
-//
-// Created on 2018-01-27
-//
+// MIT Licence applies http://opensource.org/licenses/MIT
 
 package env
 
@@ -15,18 +10,25 @@ import (
 	"time"
 )
 
-// Default reader, which reads from the system environment.
-var sysEnv *envReader
+var (
+	// System retrieves values from the system environment.
+	System Env = systemEnv{}
+	// Default reader, which reads from the system environment.
+	system = reader{System}
+)
 
-func init() {
-	sysEnv = &envReader{&realEnv{}}
+// systemEnv reads values from the real environment
+type systemEnv struct{}
+
+func (env systemEnv) Lookup(key string) (string, bool) {
+	return os.LookupEnv(key)
 }
 
-// Env is the datasource for bindings and lookup. It is an optional
+// Env is the data source for bindings and lookup. It is an optional
 // parameter to Bind(). By specifying a custom Env, it's possible
 // to populate a struct from an alternative source.
 //
-// The demo program in examples/docopt implements a custom Env
+// The demo program in _examples/docopt implements a custom Env
 // to populate a struct from docopt options via Bind().
 type Env interface {
 	// Lookup retrieves the value of the variable named by key.
@@ -38,18 +40,46 @@ type Env interface {
 	Lookup(key string) (string, bool)
 }
 
+// MapEnv is a string: string mapping that implements Env.
+type MapEnv map[string]string
+
+func (env MapEnv) Lookup(key string) (string, bool) {
+	s, ok := env[key]
+	return s, ok
+}
+
+// reader implements the conversion of strings to other types.
+type reader struct {
+	env Env
+}
+
 // Get returns the value for envvar "key".
 // It accepts one optional "fallback" argument. If no envvar is set,
 // returns fallback or an empty string.
 //
 // If a variable is set, but empty, its value is used.
 func Get(key string, fallback ...string) string {
-	return sysEnv.Get(key, fallback...)
+	return system.Get(key, fallback...)
+}
+func (r reader) Get(key string, fallback ...string) string {
+	var fb string
+	if len(fallback) > 0 {
+		fb = fallback[0]
+	}
+
+	s, ok := r.env.Lookup(key)
+	if !ok {
+		return fb
+	}
+	return s
 }
 
 // GetString is a synonym for Get.
 func GetString(key string, fallback ...string) string {
-	return sysEnv.GetString(key, fallback...)
+	return system.GetString(key, fallback...)
+}
+func (r reader) GetString(key string, fallback ...string) string {
+	return r.Get(key, fallback...)
 }
 
 // GetInt returns the value for envvar "key" as an int.
@@ -60,7 +90,23 @@ func GetString(key string, fallback ...string) string {
 // fails, tries to parse the number with strconv.ParseFloat() and
 // truncate it to an int.
 func GetInt(key string, fallback ...int) int {
-	return sysEnv.GetInt(key, fallback...)
+	return system.GetInt(key, fallback...)
+}
+func (r reader) GetInt(key string, fallback ...int) int {
+	var fb int
+	if len(fallback) > 0 {
+		fb = fallback[0]
+	}
+	s, ok := r.env.Lookup(key)
+	if !ok {
+		return fb
+	}
+
+	i, err := parseInt(s)
+	if err != nil {
+		return fb
+	}
+	return i
 }
 
 // GetUint returns the value for envvar "key" as an int.
@@ -71,7 +117,23 @@ func GetInt(key string, fallback ...int) int {
 // fails, tries to parse the number with strconv.ParseFloat() and
 // truncate it to a uint.
 func GetUint(key string, fallback ...uint) uint {
-	return sysEnv.GetUint(key, fallback...)
+	return system.GetUint(key, fallback...)
+}
+func (r reader) GetUint(key string, fallback ...uint) uint {
+	var fb uint
+	if len(fallback) > 0 {
+		fb = fallback[0]
+	}
+	s, ok := r.env.Lookup(key)
+	if !ok {
+		return fb
+	}
+
+	i, err := parseUint(s)
+	if err != nil {
+		return fb
+	}
+	return i
 }
 
 // GetFloat returns the value for envvar "key" as a float.
@@ -80,7 +142,23 @@ func GetUint(key string, fallback ...uint) uint {
 //
 // Values are parsed with strconv.ParseFloat().
 func GetFloat(key string, fallback ...float64) float64 {
-	return sysEnv.GetFloat(key, fallback...)
+	return system.GetFloat(key, fallback...)
+}
+func (r reader) GetFloat(key string, fallback ...float64) float64 {
+	var fb float64
+	if len(fallback) > 0 {
+		fb = fallback[0]
+	}
+	s, ok := r.env.Lookup(key)
+	if !ok {
+		return fb
+	}
+
+	n, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return fb
+	}
+	return n
 }
 
 // GetDuration returns the value for envvar "key" as a time.Duration.
@@ -89,7 +167,23 @@ func GetFloat(key string, fallback ...float64) float64 {
 //
 // Values are parsed with time.ParseDuration().
 func GetDuration(key string, fallback ...time.Duration) time.Duration {
-	return sysEnv.GetDuration(key, fallback...)
+	return system.GetDuration(key, fallback...)
+}
+func (r reader) GetDuration(key string, fallback ...time.Duration) time.Duration {
+	var fb time.Duration
+	if len(fallback) > 0 {
+		fb = fallback[0]
+	}
+	s, ok := r.env.Lookup(key)
+	if !ok {
+		return fb
+	}
+
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return fb
+	}
+	return d
 }
 
 // GetBool returns the value for envvar "key" as a boolean.
@@ -98,131 +192,10 @@ func GetDuration(key string, fallback ...time.Duration) time.Duration {
 //
 // Values are parsed with strconv.ParseBool().
 func GetBool(key string, fallback ...bool) bool {
-	return sysEnv.GetBool(key, fallback...)
+	return system.GetBool(key, fallback...)
 }
-
-// realEnv reads values from the real environment
-type realEnv struct{}
-
-func (env *realEnv) Lookup(key string) (string, bool) {
-	return os.LookupEnv(key)
-}
-
-// envReader implements the conversion of strings to other types.
-type envReader struct {
-	env Env
-}
-
-func (r *envReader) Get(key string, fallback ...string) string {
-
-	var fb string
-
-	if len(fallback) > 0 {
-		fb = fallback[0]
-	}
-	s, ok := r.env.Lookup(key)
-	if !ok {
-		return fb
-	}
-	return s
-}
-
-func (r *envReader) GetString(key string, fallback ...string) string {
-	return r.Get(key, fallback...)
-}
-
-func (r *envReader) GetInt(key string, fallback ...int) int {
-
-	var fb int
-
-	if len(fallback) > 0 {
-		fb = fallback[0]
-	}
-	s, ok := r.env.Lookup(key)
-	if !ok {
-		return fb
-	}
-
-	// log.Printf("[env] %s=%s", key, s)
-
-	i, err := parseInt(s)
-	if err != nil {
-		return fb
-	}
-
-	return int(i)
-}
-
-func (r *envReader) GetUint(key string, fallback ...uint) uint {
-
-	var fb uint
-
-	if len(fallback) > 0 {
-		fb = fallback[0]
-	}
-	s, ok := r.env.Lookup(key)
-	if !ok {
-		return fb
-	}
-
-	// log.Printf("[env] %s=%s", key, s)
-
-	i, err := parseUint(s)
-	if err != nil {
-		return fb
-	}
-
-	return uint(i)
-}
-
-func (r *envReader) GetFloat(key string, fallback ...float64) float64 {
-
-	var fb float64
-
-	if len(fallback) > 0 {
-		fb = fallback[0]
-	}
-	s, ok := r.env.Lookup(key)
-	if !ok {
-		return fb
-	}
-
-	// log.Printf("[env] %s=%s", key, s)
-
-	n, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return fb
-	}
-
-	return n
-}
-
-func (r *envReader) GetDuration(key string, fallback ...time.Duration) time.Duration {
-
-	var fb time.Duration
-
-	if len(fallback) > 0 {
-		fb = fallback[0]
-	}
-	s, ok := r.env.Lookup(key)
-	if !ok {
-		return fb
-	}
-
-	// log.Printf("[env] %s=%s", key, s)
-
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		return fb
-	}
-
-	return d
-}
-
-func (r *envReader) GetBool(key string, fallback ...bool) bool {
-
+func (r reader) GetBool(key string, fallback ...bool) bool {
 	var fb bool
-
 	if len(fallback) > 0 {
 		fb = fallback[0]
 	}
@@ -230,14 +203,11 @@ func (r *envReader) GetBool(key string, fallback ...bool) bool {
 	if !ok {
 		return fb
 	}
-
-	// log.Printf("[env] %s=%s", key, s)
 
 	b, err := strconv.ParseBool(s)
 	if err != nil {
 		return fb
 	}
-
 	return b
 }
 
@@ -251,7 +221,7 @@ func parseInt(s string) (int, error) {
 	// Try to parse as float, then convert
 	n, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return 0, fmt.Errorf("invalid int: %v", s)
+		return 0, fmt.Errorf("invalid int: %s", s)
 	}
 	return int(n), nil
 }
@@ -269,5 +239,5 @@ func parseUint(s string) (uint, error) {
 		}
 		return uint(f), nil
 	}
-	return 0, fmt.Errorf("invalid int: %v", s)
+	return 0, fmt.Errorf("invalid int: %s", s)
 }

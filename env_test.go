@@ -1,10 +1,5 @@
-//
 // Copyright (c) 2018 Dean Jackson <deanishe@deanishe.net>
-//
-// MIT Licence. See http://opensource.org/licenses/MIT
-//
-// Created on 2018-01-27
-//
+// MIT Licence applies http://opensource.org/licenses/MIT
 
 package env
 
@@ -13,18 +8,12 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// mapEnv is a string: string mapping that implements Env.
-type mapEnv map[string]string
-
-func (env mapEnv) Lookup(key string) (string, bool) {
-	s, ok := env[key]
-	return s, ok
-}
-
 func TestGet(t *testing.T) {
-	env := mapEnv{
+	env := MapEnv{
 		"key":   "value",
 		"key2":  "value2",
 		"empty": "",
@@ -48,31 +37,26 @@ func TestGet(t *testing.T) {
 		{"key3", []string{"bob"}, "bob"},
 	}
 
-	e := &envReader{env}
+	e := &reader{env}
 
 	// Verify env is the same
 	for k, x := range env {
 		v := e.Get(k)
-		if v != x {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", k, x, v)
-		}
+		assert.Equal(t, x, v, "unexpected result")
 	}
 
 	// Test Get
 	for _, td := range data {
 		v := e.Get(td.key, td.fb...)
-		if v != td.out {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-		}
-
+		assert.Equal(t, td.out, v, "unexpected result")
 	}
 }
 
 // Basic usage of Get. Returns an empty string if variable is unset.
 func ExampleGet() {
 	// Set some test variables
-	os.Setenv("TEST_NAME", "Bob Smith")
-	os.Setenv("TEST_ADDRESS", "7, Dreary Lane")
+	_ = os.Setenv("TEST_NAME", "Bob Smith")
+	_ = os.Setenv("TEST_ADDRESS", "7, Dreary Lane")
 
 	fmt.Println(Get("TEST_NAME"))
 	fmt.Println(Get("TEST_ADDRESS"))
@@ -87,15 +71,15 @@ func ExampleGet() {
 	//
 	// Bob Smith
 
-	unsetEnv("TEST_NAME", "TEST_ADDRESS")
+	os.Clearenv()
 }
 
 // The fallback value is returned if the variable is unset.
 func ExampleGet_fallback() {
 	// Set some test variables
-	os.Setenv("TEST_NAME", "Bob Smith")
-	os.Setenv("TEST_ADDRESS", "7, Dreary Lane")
-	os.Setenv("TEST_EMAIL", "")
+	_ = os.Setenv("TEST_NAME", "Bob Smith")
+	_ = os.Setenv("TEST_ADDRESS", "7, Dreary Lane")
+	_ = os.Setenv("TEST_EMAIL", "")
 
 	fmt.Println(Get("TEST_NAME", "default name"))       // fallback ignored
 	fmt.Println(Get("TEST_ADDRESS", "default address")) // fallback ignored
@@ -108,11 +92,11 @@ func ExampleGet_fallback() {
 	//
 	// hi there!
 
-	unsetEnv("TEST_NAME", "TEST_ADDRESS", "TEST_EMAIL")
+	os.Clearenv()
 }
 
 func TestGetInt(t *testing.T) {
-	env := mapEnv{
+	env := MapEnv{
 		"one":            "1",
 		"two":            "2",
 		"zero":           "0",
@@ -149,22 +133,19 @@ func TestGetInt(t *testing.T) {
 		{"negative_float", []int{5}, -3},
 	}
 
-	e := &envReader{env}
+	e := &reader{env}
 	// Test GetInt
 	for _, td := range data {
 		v := e.GetInt(td.key, td.fb...)
-		if v != td.out {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-		}
-
+		assert.Equal(t, td.out, v, "unexpected result")
 	}
 }
 
 // Getting int values with and without fallbacks.
 func ExampleGetInt() {
 	// Set some test variables
-	os.Setenv("PORT", "3000")
-	os.Setenv("PING_INTERVAL", "")
+	_ = os.Setenv("PORT", "3000")
+	_ = os.Setenv("PING_INTERVAL", "")
 
 	fmt.Println(GetInt("PORT"))
 	fmt.Println(GetInt("PORT", 5000))        // fallback is ignored
@@ -176,11 +157,11 @@ func ExampleGetInt() {
 	// 0
 	// 60
 
-	unsetEnv("PORT", "PING_INTERVAL")
+	os.Clearenv()
 }
 
 func TestGetUint(t *testing.T) {
-	env := mapEnv{
+	env := MapEnv{
 		"one":            "1",
 		"two":            "2",
 		"zero":           "0",
@@ -217,22 +198,19 @@ func TestGetUint(t *testing.T) {
 		{"float", []uint{5}, 3},
 	}
 
-	e := &envReader{env}
+	e := &reader{env}
 	// Test GetInt
 	for _, td := range data {
 		v := e.GetUint(td.key, td.fb...)
-		if v != td.out {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-		}
-
+		assert.Equal(t, td.out, v, "unexpected result")
 	}
 }
 
 // Getting int values with and without fallbacks.
 func ExampleGetUint() {
 	// Set some test variables
-	os.Setenv("PORT", "3000")
-	os.Setenv("PING_INTERVAL", "")
+	_ = os.Setenv("PORT", "3000")
+	_ = os.Setenv("PING_INTERVAL", "")
 
 	fmt.Println(GetUint("PORT"))
 	fmt.Println(GetUint("PORT", 5000))        // fallback is ignored
@@ -244,11 +222,11 @@ func ExampleGetUint() {
 	// 0
 	// 60
 
-	unsetEnv("PORT", "PING_INTERVAL")
+	os.Clearenv()
 }
 
 func TestGetFloat(t *testing.T) {
-	env := mapEnv{
+	env := MapEnv{
 		"one.three": "1.3",
 		"two":       "2.0",
 		"zero":      "0",
@@ -277,22 +255,19 @@ func TestGetFloat(t *testing.T) {
 		{"word", []float64{5.0}, 5.0},
 	}
 
-	e := &envReader{env}
+	e := &reader{env}
 	// Test GetFloat
 	for _, td := range data {
 		v := e.GetFloat(td.key, td.fb...)
-		if v != td.out {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-		}
-
+		assert.Equal(t, td.out, v, "unexpected result")
 	}
 }
 
 // Strings are parsed to floats using strconv.ParseFloat().
 func ExampleGetFloat() {
 	// Set some test variables
-	os.Setenv("TOTAL_SCORE", "172.3")
-	os.Setenv("AVERAGE_SCORE", "7.54")
+	_ = os.Setenv("TOTAL_SCORE", "172.3")
+	_ = os.Setenv("AVERAGE_SCORE", "7.54")
 
 	fmt.Printf("%0.2f\n", GetFloat("TOTAL_SCORE"))
 	fmt.Printf("%0.1f\n", GetFloat("AVERAGE_SCORE"))
@@ -302,11 +277,11 @@ func ExampleGetFloat() {
 	// 7.5
 	// 120.5
 
-	unsetEnv("TOTAL_SCORE", "AVERAGE_SCORE")
+	os.Clearenv()
 }
 
 func TestGetDuration(t *testing.T) {
-	env := mapEnv{
+	env := MapEnv{
 		"5mins": "5m",
 		"1hour": "1h",
 		"zero":  "0",
@@ -336,25 +311,22 @@ func TestGetDuration(t *testing.T) {
 		{"word", []time.Duration{time.Second * 5}, time.Second * 5},
 	}
 
-	e := &envReader{env}
+	e := &reader{env}
 
 	// Test GetDuration
 	for _, td := range data {
 		v := e.GetDuration(td.key, td.fb...)
-		if v != td.out {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-		}
-
+		assert.Equal(t, td.out, v, "unexpected result")
 	}
 }
 
 // Durations are parsed using time.ParseDuration.
 func ExampleGetDuration() {
 	// Set some test variables
-	os.Setenv("DURATION_NAP", "20m")
-	os.Setenv("DURATION_EGG", "5m")
-	os.Setenv("DURATION_BIG_EGG", "")
-	os.Setenv("DURATION_MATCH", "1.5h")
+	_ = os.Setenv("DURATION_NAP", "20m")
+	_ = os.Setenv("DURATION_EGG", "5m")
+	_ = os.Setenv("DURATION_BIG_EGG", "")
+	_ = os.Setenv("DURATION_MATCH", "1.5h")
 
 	// returns time.Duration
 	fmt.Println(GetDuration("DURATION_NAP"))
@@ -372,16 +344,11 @@ func ExampleGetDuration() {
 	// 10m0s
 	// 90
 
-	unsetEnv(
-		"DURATION_NAP",
-		"DURATION_EGG",
-		"DURATION_BIG_EGG",
-		"DURATION_MATCH",
-	)
+	os.Clearenv()
 }
 
 func TestGetBool(t *testing.T) {
-	env := mapEnv{
+	env := MapEnv{
 		"empty": "",
 		"t":     "t",
 		"f":     "f",
@@ -415,29 +382,25 @@ func TestGetBool(t *testing.T) {
 		{"word", []bool{true}, true},
 	}
 
-	e := &envReader{env}
+	e := &reader{env}
 
 	// Test GetBool
 	for _, td := range data {
 		v := e.GetBool(td.key, td.fb...)
-		if v != td.out {
-			t.Errorf("Bad '%s'. Expected=%v, Got=%v", td.key, td.out, v)
-		}
-
+		assert.Equal(t, td.out, v, "unexpected result")
 	}
 }
 
 // Strings are parsed using strconv.ParseBool().
 func ExampleGetBool() {
-
 	// Set some test variables
-	os.Setenv("LIKE_PEAS", "t")
-	os.Setenv("LIKE_CARROTS", "true")
-	os.Setenv("LIKE_BEANS", "1")
-	os.Setenv("LIKE_LIVER", "f")
-	os.Setenv("LIKE_TOMATOES", "0")
-	os.Setenv("LIKE_BVB", "false")
-	os.Setenv("LIKE_BAYERN", "FALSE")
+	_ = os.Setenv("LIKE_PEAS", "t")
+	_ = os.Setenv("LIKE_CARROTS", "true")
+	_ = os.Setenv("LIKE_BEANS", "1")
+	_ = os.Setenv("LIKE_LIVER", "f")
+	_ = os.Setenv("LIKE_TOMATOES", "0")
+	_ = os.Setenv("LIKE_BVB", "false")
+	_ = os.Setenv("LIKE_BAYERN", "FALSE")
 
 	// strconv.ParseBool() supports many formats
 	fmt.Println(GetBool("LIKE_PEAS"))
@@ -461,19 +424,5 @@ func ExampleGetBool() {
 	// false
 	// true
 
-	unsetEnv(
-		"LIKE_PEAS",
-		"LIKE_CARROTS",
-		"LIKE_BEANS",
-		"LIKE_LIVER",
-		"LIKE_TOMATOES",
-		"LIKE_BVB",
-		"LIKE_BAYERN",
-	)
-}
-
-func unsetEnv(keys ...string) {
-	for _, key := range keys {
-		os.Unsetenv(key)
-	}
+	os.Clearenv()
 }

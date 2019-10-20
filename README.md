@@ -125,6 +125,6 @@ Licence
 This library is released under the [MIT Licence][mit].
 
 [mit]: ./LICENCE.txt
-[docopt]: ./examples/docopt/docopt_example.go
+[docopt]: _examples/docopt/docopt_example.go
 [godoc]: https://godoc.org/github.com/deanishe/go-env
 

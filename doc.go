@@ -1,16 +1,12 @@
-//
 // Copyright (c) 2018 Dean Jackson <deanishe@deanishe.net>
-//
-// MIT Licence. See http://opensource.org/licenses/MIT
-//
-// Created on 2018-01-28
-//
+// MIT Licence applies http://opensource.org/licenses/MIT
 
 /*
+Package env maps environment variables to struct fields and vice versa.
 
-Package env reads environment variables and populates structs from them.
-
-Supports boolean, string, int, float64 and time.Duration.
+It is heavily based on github.com/caarlos0/env, but has different semantics,
+and also allows the dumping of a struct to environment variables, not just
+populating a struct from environment variables.
 
 
 Reading variables
@@ -59,6 +55,29 @@ Use tags to specify a variable name or ignore a field:
 	}
 
 
+Dumping structs
+
+Dump a struct to map[string]string by passing it to Dump():
+
+    type options struct {
+        Hostname string
+        Port int
+    }
+
+    o := options{
+        Hostname: "www.example.com",
+        Port: 22,
+    }
+
+    vars, err := Dump(o)
+    if err != nil {
+         // handler err
+    }
+
+    fmt.Println(vars["HOSTNAME"]) // -> www.example.com
+    fmt.Println(vars["PORT"])     // -> 22
+
+
 Tags
 
 Add `env:"..."` tags to your struct fields to bind them to specific
@@ -86,8 +105,11 @@ Bind() accepts as a second, optional parameter.
 So you can pass a custom Env implementation to Bind() to populate
 structs from a source other than environment variables.
 
-See examples/docopt to see a custom Env implementation used to
+See _examples/docopt to see a custom Env implementation used to
 populate a struct from docopt command-line options.
+
+You can also customise the map keys used when dumping a struct by passing
+VarNameFunc to Dump().
 
 
 Licence
