@@ -165,8 +165,8 @@ func TestBind(t *testing.T) {
 		url2, _ = url.Parse("http://www.example.org")
 
 		// Time.MarshalText has 1-second resolution
-		time1 = time.Now().Truncate(time.Second)
-		time2 = time.Now().Add(-time.Hour).Truncate(time.Second)
+		time1 = time.Now().UTC().Truncate(time.Second)
+		time2 = time1.Add(-time.Hour).Truncate(time.Second)
 	)
 
 	str := func(v interface{}) string {
