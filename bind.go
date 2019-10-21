@@ -15,8 +15,26 @@ import (
 	"time"
 )
 
+// Errors returned by Dump and Bind if they are called with inappropriate values. Bind() requires a pointer to a struct,
+// while Dump requires either a struct or a pointer to a struct.
+var (
+	ErrNotStruct    = errors.New("not a struct")
+	ErrNotStructPtr = errors.New("not a pointer to a struct")
+)
+
+// function that can parse a string into a type's native values.
 type parseFunc func(s string) (interface{}, error)
 
+// return function from kindParsers/typeParsers appropriate for fieldType.
+func getParseFunc(fieldType reflect.Type) (fun parseFunc, ok bool) {
+	if fun, ok = typeParsers[fieldType]; ok {
+		return
+	}
+	fun, ok = kindParsers[fieldType.Kind()]
+	return
+}
+
+// Functions to parse strings into type-appropriate values.
 var (
 	kindParsers = map[reflect.Kind]parseFunc{
 		reflect.Bool: func(s string) (interface{}, error) {
@@ -89,13 +107,11 @@ var (
 	}
 )
 
-var (
-	ErrNotStruct    = errors.New("not a struct")
-	ErrNotStructPtr = errors.New("not a pointer to a struct")
-)
-
+// ErrUnsupported is returned by Bind if a field of an unsupported type is tagged for binding.
+// Unsupported fields that are not tagged are ignored.
 type ErrUnsupported string
 
+// implements error.Error.
 func (err ErrUnsupported) Error() string {
 	return "unsupported type: " + string(err)
 }
@@ -122,6 +138,7 @@ func Bind(v interface{}, env ...Env) error {
 	return bind(v, e)
 }
 
+// populate struct v from Env.
 func bind(v interface{}, env Env) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr {
@@ -134,6 +151,7 @@ func bind(v interface{}, env Env) error {
 	return populate(rv, env)
 }
 
+// set Value rv from Env.
 func populate(rv reflect.Value, env Env) error {
 	rvType := rv.Type()
 
@@ -160,14 +178,12 @@ func populate(rv reflect.Value, env Env) error {
 		}
 
 		field := rvType.Field(i)
-		key := field.Tag.Get("env")
-		switch key {
-		case "-":
+		key := getFieldKey(field)
+		if key == "-" {
 			continue
-		case "":
-			key = VarName(field.Name)
 		}
 		value, _ := env.Lookup(key)
+
 		if value == "" {
 			if fieldVal.Kind() == reflect.Struct {
 				if err := populate(fieldVal, env); err != nil {
@@ -184,14 +200,15 @@ func populate(rv reflect.Value, env Env) error {
 	return nil
 }
 
-func getParseFunc(fieldType reflect.Type) (fun parseFunc, ok bool) {
-	if fun, ok = typeParsers[fieldType]; ok {
-		return
+func getFieldKey(field reflect.StructField) string {
+	key := field.Tag.Get("env")
+	if key == "" {
+		key = VarName(field.Name)
 	}
-	fun, ok = kindParsers[fieldType.Kind()]
-	return
+	return key
 }
 
+// populate Value rv with value parsed from string.
 func setField(rv reflect.Value, field reflect.StructField, value string) error {
 	if rv.Kind() == reflect.Slice {
 		return setSlice(rv, field, value)
@@ -226,6 +243,7 @@ func setField(rv reflect.Value, field reflect.StructField, value string) error {
 	return ErrUnsupported(fieldType.String())
 }
 
+// populate a slice with multiple values parsed from string.
 func setSlice(rv reflect.Value, field reflect.StructField, value string) error {
 	parts := strings.Split(value, ",")
 

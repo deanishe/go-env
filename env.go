@@ -43,6 +43,7 @@ type Env interface {
 // MapEnv is a string: string mapping that implements Env.
 type MapEnv map[string]string
 
+// Lookup implements Env.
 func (env MapEnv) Lookup(key string) (string, bool) {
 	s, ok := env[key]
 	return s, ok
