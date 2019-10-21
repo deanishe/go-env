@@ -14,10 +14,7 @@ trigger:
 
 strategy:
   matrix:
-    linux_go12:
-      imageName: 'ubuntu-latest'
-      gorootDir: /usr/local/go1.12
-    linux_go13:
+    linux:
       imageName: 'ubuntu-latest'
       gorootDir: /usr/local/go1.13
     mac:
