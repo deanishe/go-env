@@ -231,100 +231,8 @@ func TestBind(t *testing.T) {
 		"UNDEFINED_FIELD": str1,
 	}
 
-	/*
-		// expected result
-		x := BindTarget{
-			Ignored:    "",
-			unexported: "",
-			String:     str1,
-			StringP:    &str1,
-			Strings:    []string{str1, str2},
-			StringsP:   []*string{&str1, &str2},
-
-			Bool:   bool1,
-			BoolP:  &bool1,
-			Bools:  []bool{bool1, bool2},
-			BoolsP: []*bool{&bool1, &bool2},
-
-			Int:   int1,
-			IntP:  &int1,
-			Ints:  []int{int1, int2},
-			IntsP: []*int{&int1, &int2},
-
-			Int8:   int8_1,
-			Int8P:  &int8_1,
-			Ints8:  []int8{int8_1, int8_2},
-			Ints8P: []*int8{&int8_1, &int8_2},
-
-			Int16:   int16_1,
-			Int16P:  &int16_1,
-			Ints16:  []int16{int16_1, int16_2},
-			Ints16P: []*int16{&int16_1, &int16_2},
-
-			Int32:   int32_1,
-			Int32P:  &int32_1,
-			Ints32:  []int32{int32_1, int32_2},
-			Ints32P: []*int32{&int32_1, &int32_2},
-
-			Int64:   int64_1,
-			Int64P:  &int64_1,
-			Ints64:  []int64{int64_1, int64_2},
-			Ints64P: []*int64{&int64_1, &int64_2},
-
-			Uint:   uint1,
-			UintP:  &uint1,
-			Uints:  []uint{uint1, uint2},
-			UintsP: []*uint{&uint1, &uint2},
-
-			Uint8:   uint8_1,
-			Uint8P:  &uint8_1,
-			Uints8:  []uint8{uint8_1, uint8_2},
-			Uints8P: []*uint8{&uint8_1, &uint8_2},
-
-			Uint16:   uint16_1,
-			Uint16P:  &uint16_1,
-			Uints16:  []uint16{uint16_1, uint16_2},
-			Uints16P: []*uint16{&uint16_1, &uint16_2},
-
-			Uint32:   uint32_1,
-			Uint32P:  &uint32_1,
-			Uints32:  []uint32{uint32_1, uint32_2},
-			Uints32P: []*uint32{&uint32_1, &uint32_2},
-
-			Uint64:   uint64_1,
-			Uint64P:  &uint64_1,
-			Uints64:  []uint64{uint64_1, uint64_2},
-			Uints64P: []*uint64{&uint64_1, &uint64_2},
-
-			Float32:   float32_1,
-			Float32P:  &float32_1,
-			Floats32:  []float32{float32_1, float32_2},
-			Floats32P: []*float32{&float32_1, &float32_2},
-
-			Float64:   float64_1,
-			Float64P:  &float64_1,
-			Floats64:  []float64{float64_1, float64_2},
-			Floats64P: []*float64{&float64_1, &float64_2},
-
-			Duration:   duration1,
-			DurationP:  &duration1,
-			Durations:  []time.Duration{duration1, duration2},
-			DurationsP: []*time.Duration{&duration1, &duration2},
-
-			URL:   *url1,
-			URLP:  url1,
-			URLS:  []url.URL{*url1, *url2},
-			URLSP: []*url.URL{url1, url2},
-
-			TimeP:  &time1,
-			TimesP: []*time.Time{&time1, &time2},
-		}
-		x.Undefined.UndefinedField = str1
-	*/
-
 	bt := BindTarget{}
 	require.NoError(t, Bind(&bt, testEnv), "bind failed")
-	// assert.Equal(t, x, bt, "unexpected result")
 	assert.Equal(t, "", bt.Ignored, "unexpected Ignored")
 	assert.Equal(t, "", bt.unexported, "unexpected unexported")
 	assert.Equal(t, str1, bt.String, "unexpected String")
@@ -407,7 +315,7 @@ func TestBind(t *testing.T) {
 	assert.Equal(t, []url.URL{*url1, *url2}, bt.URLS, "unexpected URLS")
 	assert.Equal(t, []*url.URL{url1, url2}, bt.URLSP, "unexpected URLSP")
 
-	assert.Equalf(t, &time1, bt.TimeP, "unexpected TimeP: %s vs %s", (&time1).String(), bt.TimeP.String())
+	assert.Equal(t, &time1, bt.TimeP, "unexpected TimeP")
 	assert.Equal(t, []*time.Time{&time1, &time2}, bt.TimesP, "unexpected TimesP")
 
 	assert.Equal(t, str1, bt.Undefined.UndefinedField, "unexpected UndefinedField")
