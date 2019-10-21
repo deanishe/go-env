@@ -21,10 +21,12 @@ var unknownType = errors.New("unknown type")
 // DumpOption is a configuration option to Dump.
 type DumpOption func(d *dumper)
 
-// IgnoreZeroValues excludes zero values from the returned map of variables.
-// Non-nil slices are unaffected by the setting: an empty string is returned
-// for empty slices regardless.
-func IgnoreZeroValues(d *dumper) { d.noZero = true }
+var (
+	// IgnoreZeroValues excludes zero values from the returned map of variables.
+	// Non-nil slices are unaffected by the setting: an empty string is returned
+	// for empty slices regardless.
+	IgnoreZeroValues DumpOption = func(d *dumper) { d.noZero = true }
+)
 
 // VarNameFunc specifies a different function to generate the names of the
 // variables returned by Dump.
