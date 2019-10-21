@@ -30,7 +30,7 @@ variables:
   # GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
 #  GOROOT: '/usr/local/opt/go/libexec' # Go installation path
 #  GOROOT: /usr/local
-  GOROOT: ($gorootDir)
+  GOROOT: '$(gorootDir)'
   GOPATH: '$(system.defaultWorkingDirectory)/gopath'
   GOBIN:  '$(GOPATH)/bin'
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
