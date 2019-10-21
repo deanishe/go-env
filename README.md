@@ -171,7 +171,7 @@ This library is released under the [MIT Licence][mit].
 [godoc-link]: https://godoc.org/github.com/deanishe/go-env
 [goreport-link]: https://goreportcard.com/report/github.com/deanishe/go-env
 [goreport-icon]: https://goreportcard.com/badge/github.com/deanishe/go-env
-[coverage-icon]: https://img.shields.io/codacy/coverage/a0ebe54382ad43bf8604b6d6aac02400?logoColor=brightgreen
+[coverage-icon]: https://img.shields.io/codacy/coverage/a0ebe54382ad43bf8604b6d6aac02400?color=brightgreen
 [codacy-link]: https://www.codacy.com/app/deanishe/go-env
 [azure-status-icon]: https://img.shields.io/azure-devops/build/deanishe/3b09feef-08fa-42bc-830e-57ce1de63779/2
 [azure-link]: https://dev.azure.com/deanishe/go-env/_build
