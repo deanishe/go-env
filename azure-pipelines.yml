@@ -1,6 +1,3 @@
-# Go
-# Build your Go project.
-# Add steps that test, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
 trigger:
@@ -61,15 +58,24 @@ steps:
   displayName: 'Run Tests'
 
 - script: |
-    go get github.com/schrej/godacov
-    if [[ '$(System.PullRequest.SourceCommitId)' != "" ]]; then
-      COMMIT='$(System.PullRequest.SourceCommitId)'
-      echo "submitting PR commit $COMMIT ..."
+    if [[ "$CODECOV_TOKEN" == "" ]]; then
+      echo "CODECOV_TOKEN not set; skipping upload"
     else
-      COMMIT='$(Build.SourceVersion)'
-      echo "submitting master commit $COMMIT ..."
+      bash <(curl -s https://codecov.io/bash); true
     fi
-    godacov -r coverage.out -t '$(Codacy.Token)' -c "$COMMIT"; true
-    bash <(curl -s https://codecov.io/bash); true
+
+    if [[ "$BUILD_SOURCEBRANCHNAME" != "master" ]]; then
+      echo "skipping codacy upload for branch $BUILD_SOURCEBRANCHNAME"
+      exit 0
+    fi
+
+    if [[ "$CODACY_TOKEN" == "" ]]; then
+      echo "CODACY_TOKEN not set; skipping upload"
+    else
+      go run github.com/schrej/godacov -r coverage.out -t "$CODACY_TOKEN" -c "$$BUILD_SOURCEVERSION"; true
+    fi
   workingDirectory: '$(modulePath)'
   displayName: 'Upload Coverage'
+  env:
+    CODACY_TOKEN: '$(Codacy.Token)'
+    CODECOV_TOKEN: '$(Codecov.Token)'
