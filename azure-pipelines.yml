@@ -61,6 +61,15 @@ steps:
   displayName: 'Run Tests'
 
 - script: |
+    go get github.com/schrej/godacov
+    if [[ '$(System.PullRequest.SourceCommitId)' != "" ]]; then
+      COMMIT='$(System.PullRequest.SourceCommitId)'
+      echo "submitting PR commit $COMMIT ..."
+    else
+      COMMIT='$(Build.SourceVersion)'
+      echo "submitting master commit $COMMIT ..."
+    fi
+    godacov -r coverage.out -t '$(Codacy.Token)' -c "$COMMIT"; true
     bash <(curl -s https://codecov.io/bash); true
   workingDirectory: '$(modulePath)'
   displayName: 'Upload Coverage'
