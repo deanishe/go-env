@@ -407,7 +407,7 @@ func TestBind(t *testing.T) {
 	assert.Equal(t, []url.URL{*url1, *url2}, bt.URLS, "unexpected URLS")
 	assert.Equal(t, []*url.URL{url1, url2}, bt.URLSP, "unexpected URLSP")
 
-	assert.Equal(t, &time1, bt.TimeP, "unexpected TimeP")
+	assert.Equalf(t, &time1, bt.TimeP, "unexpected TimeP: %s vs %s", (&time1).String(), bt.TimeP.String())
 	assert.Equal(t, []*time.Time{&time1, &time2}, bt.TimesP, "unexpected TimesP")
 
 	assert.Equal(t, str1, bt.Undefined.UndefinedField, "unexpected UndefinedField")
