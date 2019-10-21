@@ -2,21 +2,28 @@
 go-env
 ======
 
-Easily access environment variables from Go, and bind them to structs.
+[![Build Status][azure-status-icon]][azure-link]
+[![Go Report Card][goreport-icon]][goreport-link]
+[![Codacy coverage][coverage-icon]][codacy-link]
+[![GoDoc][godoc-icon]][godoc-link]
+
+Access environment variables from Go, and populate structs from them.
+
+<!-- MarkdownTOC autolink=true autoanchor=true -->
+
+- [Usage](#usage)
+    - [Access environment variables](#access-environment-variables)
+    - [Binding](#binding)
+    - [Customisation](#customisation)
+    - [Dumping](#dumping)
+- [Installation](#installation)
+- [Documentation](#documentation)
+- [Licence](#licence)
+
+<!-- /MarkdownTOC -->
 
 
-<!-- vim-markdown-toc GFM -->
-
-* [Usage](#usage)
-    * [Access environment variables](#access-environment-variables)
-    * [Binding](#binding)
-    * [Customisation](#customisation)
-* [Installation](#installation)
-* [Documentation](#documentation)
-* [Licence](#licence)
-
-<!-- vim-markdown-toc -->
-
+<a id="usage"></a>
 Usage
 -----
 
@@ -25,7 +32,8 @@ Import path is `github.com/deanishe/go-env`, import name is `env`.
 You can directly access environment variables, or populate your structs from them using struct tags and `env.Bind()`.
 
 
-### Access environment variables
+<a id="access-environment-variables"></a>
+### Access environment variables ###
 
 Read `int`, `float64`, `duration` and `string` values from environment variables, with optional fallback values for unset variables.
 
@@ -46,7 +54,8 @@ i := env.GetInt("SOME_UNSET_NUMBER", 10)
 ```
 
 
-### Binding
+<a id="binding"></a>
+### Binding ###
 
 You can also populate a struct directly from the environment by appropriately tagging it and calling `env.Bind()`:
 
@@ -84,6 +93,7 @@ fmt.Printf("%v\n", c.Online)
 ```
 
 
+<a id="customisation"></a>
 ### Customisation ###
 
 Variables are retrieved via implementors of the `env.Env` interface (which `env.Bind()` accepts as a second, optional parameter):
@@ -105,6 +115,33 @@ So you can pass a custom `Env` implementation to `Bind()` in order to populate s
 See [examples/docopt][docopt] to see how to implement a custom `Env` that populates a struct from `docopt` command-line options.
 
 
+<a id="dumping"></a>
+### Dumping ###
+
+Dump a struct to a map[string]string by passing it to Dump():
+
+```go
+type options struct {
+    Hostname string
+    Port int
+}
+
+o := options{
+    Hostname: "www.example.com",
+    Port: 22,
+}
+
+vars, err := Dump(o)
+if err != nil {
+     // handler err
+}
+
+fmt.Println(vars["HOSTNAME"]) // -> www.example.com
+fmt.Println(vars["PORT"])     // -> 22
+```
+
+
+<a id="installation"></a>
 Installation
 ------------
 
@@ -113,18 +150,29 @@ go get github.com/deanishe/go-env
 ```
 
 
+<a id="documentation"></a>
 Documentation
 -------------
 
-Read the documentation on [GoDoc][godoc].
+Read the documentation on [GoDoc][godoc-link].
 
 
+<a id="licence"></a>
 Licence
 -------
 
 This library is released under the [MIT Licence][mit].
 
+
 [mit]: ./LICENCE.txt
 [docopt]: _examples/docopt/docopt_example.go
-[godoc]: https://godoc.org/github.com/deanishe/go-env
+
+[godoc-icon]: https://godoc.org/github.com/deanishe/go-env?status.svg
+[godoc-link]: https://godoc.org/github.com/deanishe/go-env
+[goreport-link]: https://goreportcard.com/report/github.com/deanishe/go-env
+[goreport-icon]: https://goreportcard.com/badge/github.com/deanishe/go-env
+[coverage-icon]: https://img.shields.io/codacy/coverage/a0ebe54382ad43bf8604b6d6aac02400?logoColor=brightgreen
+[codacy-link]: https://www.codacy.com/app/deanishe/go-env
+[azure-status-icon]: https://img.shields.io/azure-devops/build/deanishe/3b09feef-08fa-42bc-830e-57ce1de63779/2
+[azure-link]: https://dev.azure.com/deanishe/go-env/_build
 
