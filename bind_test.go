@@ -231,98 +231,186 @@ func TestBind(t *testing.T) {
 		"UNDEFINED_FIELD": str1,
 	}
 
-	// expected result
-	x := BindTarget{
-		Ignored:    "",
-		unexported: "",
-		String:     str1,
-		StringP:    &str1,
-		Strings:    []string{str1, str2},
-		StringsP:   []*string{&str1, &str2},
+	/*
+		// expected result
+		x := BindTarget{
+			Ignored:    "",
+			unexported: "",
+			String:     str1,
+			StringP:    &str1,
+			Strings:    []string{str1, str2},
+			StringsP:   []*string{&str1, &str2},
 
-		Bool:   bool1,
-		BoolP:  &bool1,
-		Bools:  []bool{bool1, bool2},
-		BoolsP: []*bool{&bool1, &bool2},
+			Bool:   bool1,
+			BoolP:  &bool1,
+			Bools:  []bool{bool1, bool2},
+			BoolsP: []*bool{&bool1, &bool2},
 
-		Int:   int1,
-		IntP:  &int1,
-		Ints:  []int{int1, int2},
-		IntsP: []*int{&int1, &int2},
+			Int:   int1,
+			IntP:  &int1,
+			Ints:  []int{int1, int2},
+			IntsP: []*int{&int1, &int2},
 
-		Int8:   int8_1,
-		Int8P:  &int8_1,
-		Ints8:  []int8{int8_1, int8_2},
-		Ints8P: []*int8{&int8_1, &int8_2},
+			Int8:   int8_1,
+			Int8P:  &int8_1,
+			Ints8:  []int8{int8_1, int8_2},
+			Ints8P: []*int8{&int8_1, &int8_2},
 
-		Int16:   int16_1,
-		Int16P:  &int16_1,
-		Ints16:  []int16{int16_1, int16_2},
-		Ints16P: []*int16{&int16_1, &int16_2},
+			Int16:   int16_1,
+			Int16P:  &int16_1,
+			Ints16:  []int16{int16_1, int16_2},
+			Ints16P: []*int16{&int16_1, &int16_2},
 
-		Int32:   int32_1,
-		Int32P:  &int32_1,
-		Ints32:  []int32{int32_1, int32_2},
-		Ints32P: []*int32{&int32_1, &int32_2},
+			Int32:   int32_1,
+			Int32P:  &int32_1,
+			Ints32:  []int32{int32_1, int32_2},
+			Ints32P: []*int32{&int32_1, &int32_2},
 
-		Int64:   int64_1,
-		Int64P:  &int64_1,
-		Ints64:  []int64{int64_1, int64_2},
-		Ints64P: []*int64{&int64_1, &int64_2},
+			Int64:   int64_1,
+			Int64P:  &int64_1,
+			Ints64:  []int64{int64_1, int64_2},
+			Ints64P: []*int64{&int64_1, &int64_2},
 
-		Uint:   uint1,
-		UintP:  &uint1,
-		Uints:  []uint{uint1, uint2},
-		UintsP: []*uint{&uint1, &uint2},
+			Uint:   uint1,
+			UintP:  &uint1,
+			Uints:  []uint{uint1, uint2},
+			UintsP: []*uint{&uint1, &uint2},
 
-		Uint8:   uint8_1,
-		Uint8P:  &uint8_1,
-		Uints8:  []uint8{uint8_1, uint8_2},
-		Uints8P: []*uint8{&uint8_1, &uint8_2},
+			Uint8:   uint8_1,
+			Uint8P:  &uint8_1,
+			Uints8:  []uint8{uint8_1, uint8_2},
+			Uints8P: []*uint8{&uint8_1, &uint8_2},
 
-		Uint16:   uint16_1,
-		Uint16P:  &uint16_1,
-		Uints16:  []uint16{uint16_1, uint16_2},
-		Uints16P: []*uint16{&uint16_1, &uint16_2},
+			Uint16:   uint16_1,
+			Uint16P:  &uint16_1,
+			Uints16:  []uint16{uint16_1, uint16_2},
+			Uints16P: []*uint16{&uint16_1, &uint16_2},
 
-		Uint32:   uint32_1,
-		Uint32P:  &uint32_1,
-		Uints32:  []uint32{uint32_1, uint32_2},
-		Uints32P: []*uint32{&uint32_1, &uint32_2},
+			Uint32:   uint32_1,
+			Uint32P:  &uint32_1,
+			Uints32:  []uint32{uint32_1, uint32_2},
+			Uints32P: []*uint32{&uint32_1, &uint32_2},
 
-		Uint64:   uint64_1,
-		Uint64P:  &uint64_1,
-		Uints64:  []uint64{uint64_1, uint64_2},
-		Uints64P: []*uint64{&uint64_1, &uint64_2},
+			Uint64:   uint64_1,
+			Uint64P:  &uint64_1,
+			Uints64:  []uint64{uint64_1, uint64_2},
+			Uints64P: []*uint64{&uint64_1, &uint64_2},
 
-		Float32:   float32_1,
-		Float32P:  &float32_1,
-		Floats32:  []float32{float32_1, float32_2},
-		Floats32P: []*float32{&float32_1, &float32_2},
+			Float32:   float32_1,
+			Float32P:  &float32_1,
+			Floats32:  []float32{float32_1, float32_2},
+			Floats32P: []*float32{&float32_1, &float32_2},
 
-		Float64:   float64_1,
-		Float64P:  &float64_1,
-		Floats64:  []float64{float64_1, float64_2},
-		Floats64P: []*float64{&float64_1, &float64_2},
+			Float64:   float64_1,
+			Float64P:  &float64_1,
+			Floats64:  []float64{float64_1, float64_2},
+			Floats64P: []*float64{&float64_1, &float64_2},
 
-		Duration:   duration1,
-		DurationP:  &duration1,
-		Durations:  []time.Duration{duration1, duration2},
-		DurationsP: []*time.Duration{&duration1, &duration2},
+			Duration:   duration1,
+			DurationP:  &duration1,
+			Durations:  []time.Duration{duration1, duration2},
+			DurationsP: []*time.Duration{&duration1, &duration2},
 
-		URL:   *url1,
-		URLP:  url1,
-		URLS:  []url.URL{*url1, *url2},
-		URLSP: []*url.URL{url1, url2},
+			URL:   *url1,
+			URLP:  url1,
+			URLS:  []url.URL{*url1, *url2},
+			URLSP: []*url.URL{url1, url2},
 
-		TimeP:  &time1,
-		TimesP: []*time.Time{&time1, &time2},
-	}
-	x.Undefined.UndefinedField = str1
+			TimeP:  &time1,
+			TimesP: []*time.Time{&time1, &time2},
+		}
+		x.Undefined.UndefinedField = str1
+	*/
 
-	target := BindTarget{}
-	require.NoError(t, Bind(&target, testEnv), "bind failed")
-	assert.Equal(t, x, target, "unexpected result")
+	bt := BindTarget{}
+	require.NoError(t, Bind(&bt, testEnv), "bind failed")
+	// assert.Equal(t, x, bt, "unexpected result")
+	assert.Equal(t, "", bt.Ignored, "unexpected Ignored")
+	assert.Equal(t, "", bt.unexported, "unexpected unexported")
+	assert.Equal(t, str1, bt.String, "unexpected String")
+	assert.Equal(t, &str1, bt.StringP, "unexpected StringP")
+	assert.Equal(t, []string{str1, str2}, bt.Strings, "unexpected Strings")
+	assert.Equal(t, []*string{&str1, &str2}, bt.StringsP, "unexpected StringsP")
+
+	assert.Equal(t, bool1, bt.Bool, "unexpected Bool")
+	assert.Equal(t, &bool1, bt.BoolP, "unexpected BoolP")
+	assert.Equal(t, []bool{bool1, bool2}, bt.Bools, "unexpected Bools")
+	assert.Equal(t, []*bool{&bool1, &bool2}, bt.BoolsP, "unexpected BoolsP")
+
+	assert.Equal(t, int1, bt.Int, "unexpected Int")
+	assert.Equal(t, &int1, bt.IntP, "unexpected IntP")
+	assert.Equal(t, []int{int1, int2}, bt.Ints, "unexpected Ints")
+	assert.Equal(t, []*int{&int1, &int2}, bt.IntsP, "unexpected IntsP")
+
+	assert.Equal(t, int8_1, bt.Int8, "unexpected Int8")
+	assert.Equal(t, &int8_1, bt.Int8P, "unexpected Int8P")
+	assert.Equal(t, []int8{int8_1, int8_2}, bt.Ints8, "unexpected Ints8")
+	assert.Equal(t, []*int8{&int8_1, &int8_2}, bt.Ints8P, "unexpected Ints8P")
+
+	assert.Equal(t, int16_1, bt.Int16, "unexpected Int16")
+	assert.Equal(t, &int16_1, bt.Int16P, "unexpected Int16P")
+	assert.Equal(t, []int16{int16_1, int16_2}, bt.Ints16, "unexpected Ints16")
+	assert.Equal(t, []*int16{&int16_1, &int16_2}, bt.Ints16P, "unexpected Ints16P")
+
+	assert.Equal(t, int32_1, bt.Int32, "unexpected Int32")
+	assert.Equal(t, &int32_1, bt.Int32P, "unexpected Int32P")
+	assert.Equal(t, []int32{int32_1, int32_2}, bt.Ints32, "unexpected Ints32")
+	assert.Equal(t, []*int32{&int32_1, &int32_2}, bt.Ints32P, "unexpected Ints32P")
+
+	assert.Equal(t, int64_1, bt.Int64, "unexpected Int64")
+	assert.Equal(t, &int64_1, bt.Int64P, "unexpected Int64P")
+	assert.Equal(t, []int64{int64_1, int64_2}, bt.Ints64, "unexpected Ints64")
+	assert.Equal(t, []*int64{&int64_1, &int64_2}, bt.Ints64P, "unexpected Ints64P")
+
+	assert.Equal(t, uint1, bt.Uint, "unexpected Uint")
+	assert.Equal(t, &uint1, bt.UintP, "unexpected UintP")
+	assert.Equal(t, []uint{uint1, uint2}, bt.Uints, "unexpected Uints")
+	assert.Equal(t, []*uint{&uint1, &uint2}, bt.UintsP, "unexpected UintsP")
+
+	assert.Equal(t, uint8_1, bt.Uint8, "unexpected Uint8")
+	assert.Equal(t, &uint8_1, bt.Uint8P, "unexpected Uint8P")
+	assert.Equal(t, []uint8{uint8_1, uint8_2}, bt.Uints8, "unexpected Uints8")
+	assert.Equal(t, []*uint8{&uint8_1, &uint8_2}, bt.Uints8P, "unexpected Uints8P")
+
+	assert.Equal(t, uint16_1, bt.Uint16, "unexpected Uint16")
+	assert.Equal(t, &uint16_1, bt.Uint16P, "unexpected Uint16P")
+	assert.Equal(t, []uint16{uint16_1, uint16_2}, bt.Uints16, "unexpected Uints16")
+	assert.Equal(t, []*uint16{&uint16_1, &uint16_2}, bt.Uints16P, "unexpected Uints16P")
+
+	assert.Equal(t, uint32_1, bt.Uint32, "unexpected Uint32")
+	assert.Equal(t, &uint32_1, bt.Uint32P, "unexpected Uint32P")
+	assert.Equal(t, []uint32{uint32_1, uint32_2}, bt.Uints32, "unexpected Uints32")
+	assert.Equal(t, []*uint32{&uint32_1, &uint32_2}, bt.Uints32P, "unexpected Uints32P")
+
+	assert.Equal(t, uint64_1, bt.Uint64, "unexpected Uint64")
+	assert.Equal(t, &uint64_1, bt.Uint64P, "unexpected Uint64P")
+	assert.Equal(t, []uint64{uint64_1, uint64_2}, bt.Uints64, "unexpected Uints64")
+	assert.Equal(t, []*uint64{&uint64_1, &uint64_2}, bt.Uints64P, "unexpected Uints64P")
+
+	assert.Equal(t, float32_1, bt.Float32, "unexpected Float32")
+	assert.Equal(t, &float32_1, bt.Float32P, "unexpected Float32P")
+	assert.Equal(t, []float32{float32_1, float32_2}, bt.Floats32, "unexpected Floats32")
+	assert.Equal(t, []*float32{&float32_1, &float32_2}, bt.Floats32P, "unexpected Floats32P")
+
+	assert.Equal(t, float64_1, bt.Float64, "unexpected Float64")
+	assert.Equal(t, &float64_1, bt.Float64P, "unexpected Float64P")
+	assert.Equal(t, []float64{float64_1, float64_2}, bt.Floats64, "unexpected Floats64")
+	assert.Equal(t, []*float64{&float64_1, &float64_2}, bt.Floats64P, "unexpected Floats64P")
+
+	assert.Equal(t, duration1, bt.Duration, "unexpected Duration")
+	assert.Equal(t, &duration1, bt.DurationP, "unexpected DurationP")
+	assert.Equal(t, []time.Duration{duration1, duration2}, bt.Durations, "unexpected Durations")
+	assert.Equal(t, []*time.Duration{&duration1, &duration2}, bt.DurationsP, "unexpected DurationsP")
+
+	assert.Equal(t, *url1, bt.URL, "unexpected URL")
+	assert.Equal(t, url1, bt.URLP, "unexpected URLP")
+	assert.Equal(t, []url.URL{*url1, *url2}, bt.URLS, "unexpected URLS")
+	assert.Equal(t, []*url.URL{url1, url2}, bt.URLSP, "unexpected URLSP")
+
+	assert.Equal(t, &time1, bt.TimeP, "unexpected TimeP")
+	assert.Equal(t, []*time.Time{&time1, &time2}, bt.TimesP, "unexpected TimesP")
+
+	assert.Equal(t, str1, bt.Undefined.UndefinedField, "unexpected UndefinedField")
 }
 
 func TestBind_empty(t *testing.T) {
