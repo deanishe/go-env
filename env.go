@@ -13,8 +13,8 @@ import (
 var (
 	// System retrieves values from the system environment.
 	System Env = systemEnv{}
-	// Default reader, which reads from the system environment.
-	system = reader{System}
+	// Default Reader, which reads from the system environment.
+	system = Reader{System}
 )
 
 // systemEnv reads values from the real environment
@@ -49,9 +49,14 @@ func (env MapEnv) Lookup(key string) (string, bool) {
 	return s, ok
 }
 
-// reader implements the conversion of strings to other types.
-type reader struct {
+// Reader converts values from Env into other types.
+type Reader struct {
 	env Env
+}
+
+// New creates a new Reader based on Env.
+func New(env Env) Reader {
+	return Reader{env}
 }
 
 // Get returns the value for envvar "key".
@@ -62,7 +67,13 @@ type reader struct {
 func Get(key string, fallback ...string) string {
 	return system.Get(key, fallback...)
 }
-func (r reader) Get(key string, fallback ...string) string {
+
+// Get returns the value for envvar "key".
+// It accepts one optional "fallback" argument. If no envvar is set,
+// returns fallback or an empty string.
+//
+// If a variable is set, but empty, its value is used.
+func (r Reader) Get(key string, fallback ...string) string {
 	var fb string
 	if len(fallback) > 0 {
 		fb = fallback[0]
@@ -79,7 +90,9 @@ func (r reader) Get(key string, fallback ...string) string {
 func GetString(key string, fallback ...string) string {
 	return system.GetString(key, fallback...)
 }
-func (r reader) GetString(key string, fallback ...string) string {
+
+// GetString is a synonym for Get.
+func (r Reader) GetString(key string, fallback ...string) string {
 	return r.Get(key, fallback...)
 }
 
@@ -93,7 +106,15 @@ func (r reader) GetString(key string, fallback ...string) string {
 func GetInt(key string, fallback ...int) int {
 	return system.GetInt(key, fallback...)
 }
-func (r reader) GetInt(key string, fallback ...int) int {
+
+// GetInt returns the value for envvar "key" as an int.
+// It accepts one optional "fallback" argument. If no
+// envvar is set, returns fallback or 0.
+//
+// Values are parsed with strconv.ParseInt(). If strconv.ParseInt()
+// fails, tries to parse the number with strconv.ParseFloat() and
+// truncate it to an int.
+func (r Reader) GetInt(key string, fallback ...int) int {
 	var fb int
 	if len(fallback) > 0 {
 		fb = fallback[0]
@@ -120,7 +141,15 @@ func (r reader) GetInt(key string, fallback ...int) int {
 func GetUint(key string, fallback ...uint) uint {
 	return system.GetUint(key, fallback...)
 }
-func (r reader) GetUint(key string, fallback ...uint) uint {
+
+// GetUint returns the value for envvar "key" as an int.
+// It accepts one optional "fallback" argument. If no
+// envvar is set, returns fallback or 0.
+//
+// Values are parsed with strconv.ParseUint(). If strconv.ParseUint()
+// fails, tries to parse the number with strconv.ParseFloat() and
+// truncate it to a uint.
+func (r Reader) GetUint(key string, fallback ...uint) uint {
 	var fb uint
 	if len(fallback) > 0 {
 		fb = fallback[0]
@@ -145,7 +174,13 @@ func (r reader) GetUint(key string, fallback ...uint) uint {
 func GetFloat(key string, fallback ...float64) float64 {
 	return system.GetFloat(key, fallback...)
 }
-func (r reader) GetFloat(key string, fallback ...float64) float64 {
+
+// GetFloat returns the value for envvar "key" as a float.
+// It accepts one optional "fallback" argument. If no
+// envvar is set, returns fallback or 0.0.
+//
+// Values are parsed with strconv.ParseFloat().
+func (r Reader) GetFloat(key string, fallback ...float64) float64 {
 	var fb float64
 	if len(fallback) > 0 {
 		fb = fallback[0]
@@ -170,7 +205,13 @@ func (r reader) GetFloat(key string, fallback ...float64) float64 {
 func GetDuration(key string, fallback ...time.Duration) time.Duration {
 	return system.GetDuration(key, fallback...)
 }
-func (r reader) GetDuration(key string, fallback ...time.Duration) time.Duration {
+
+// GetDuration returns the value for envvar "key" as a time.Duration.
+// It accepts one optional "fallback" argument. If no
+// envvar is set, returns fallback or 0.
+//
+// Values are parsed with time.ParseDuration().
+func (r Reader) GetDuration(key string, fallback ...time.Duration) time.Duration {
 	var fb time.Duration
 	if len(fallback) > 0 {
 		fb = fallback[0]
@@ -195,7 +236,13 @@ func (r reader) GetDuration(key string, fallback ...time.Duration) time.Duration
 func GetBool(key string, fallback ...bool) bool {
 	return system.GetBool(key, fallback...)
 }
-func (r reader) GetBool(key string, fallback ...bool) bool {
+
+// GetBool returns the value for envvar "key" as a boolean.
+// It accepts one optional "fallback" argument. If no
+// envvar is set, returns fallback or false.
+//
+// Values are parsed with strconv.ParseBool().
+func (r Reader) GetBool(key string, fallback ...bool) bool {
 	var fb bool
 	if len(fallback) > 0 {
 		fb = fallback[0]

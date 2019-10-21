@@ -37,7 +37,7 @@ func TestGet(t *testing.T) {
 		{"key3", []string{"bob"}, "bob"},
 	}
 
-	e := &reader{env}
+	e := New(env)
 
 	// Verify env is the same
 	for k, x := range env {
@@ -133,7 +133,7 @@ func TestGetInt(t *testing.T) {
 		{"negative_float", []int{5}, -3},
 	}
 
-	e := &reader{env}
+	e := &Reader{env}
 	// Test GetInt
 	for _, td := range data {
 		v := e.GetInt(td.key, td.fb...)
@@ -198,7 +198,7 @@ func TestGetUint(t *testing.T) {
 		{"float", []uint{5}, 3},
 	}
 
-	e := &reader{env}
+	e := &Reader{env}
 	// Test GetInt
 	for _, td := range data {
 		v := e.GetUint(td.key, td.fb...)
@@ -255,7 +255,7 @@ func TestGetFloat(t *testing.T) {
 		{"word", []float64{5.0}, 5.0},
 	}
 
-	e := &reader{env}
+	e := &Reader{env}
 	// Test GetFloat
 	for _, td := range data {
 		v := e.GetFloat(td.key, td.fb...)
@@ -311,7 +311,7 @@ func TestGetDuration(t *testing.T) {
 		{"word", []time.Duration{time.Second * 5}, time.Second * 5},
 	}
 
-	e := &reader{env}
+	e := &Reader{env}
 
 	// Test GetDuration
 	for _, td := range data {
@@ -382,7 +382,7 @@ func TestGetBool(t *testing.T) {
 		{"word", []bool{true}, true},
 	}
 
-	e := &reader{env}
+	e := &Reader{env}
 
 	// Test GetBool
 	for _, td := range data {
