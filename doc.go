@@ -57,7 +57,7 @@ Use tags to specify a variable name or ignore a field:
 
 Dumping structs
 
-Dump a struct to map[string]string by passing it to Dump():
+Dump a struct to a map[string]string by passing it to Dump():
 
     type options struct {
         Hostname string

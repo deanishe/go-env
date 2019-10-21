@@ -12,18 +12,24 @@ trigger:
       - modd.conf
       - .gitignore
 
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-latest'
+      gorootDir: /usr/local/go1.13
+    mac:
+      imageName: 'macOS-10.13'
+      gorootDir: /usr/local/opt/go/libexec
+
 pool:
-  # vmImage: 'ubuntu-latest'
-  vmImage: 'macOS-10.13'
+  vmImage: $(imageName)
 
 variables:
-  # GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  # GOROOT: '/usr/local/go1.13' # Go installation path
-  # GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  GOROOT: '/usr/local/opt/go/libexec' # Go installation path
-  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  GOROOT: '$(gorootDir)'
+  GOPATH: '$(system.defaultWorkingDirectory)/gopath'
+  GOBIN:  '$(GOPATH)/bin'
+  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
+  GO111MODULE: on
 
 steps:
 - script: |
@@ -35,26 +41,35 @@ steps:
     mv !(gopath) '$(modulePath)'
     echo '##vso[task.prependpath]$(GOBIN)'
     echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up Go'
+  displayName: 'Set up Go Environment'
 
 - script: |
-    go version
     go get -v -t -d ./...
   workingDirectory: '$(modulePath)'
-  displayName: 'Fetch Code'
+  displayName: 'Fetch Dependencies'
 
 - script: |
     curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b '$(GOBIN)' v1.21.0
     golangci-lint run -c .golangci.toml
   workingDirectory: '$(modulePath)'
-  displayName: Lint
+  displayName: 'Lint Code'
 
 - script: |
+    go version
     go test -coverprofile=coverage.out ./...
   workingDirectory: '$(modulePath)'
-  displayName: Run Tests
+  displayName: 'Run Tests'
 
 - script: |
+    go get github.com/schrej/godacov
+    if [[ '$(System.PullRequest.SourceCommitId)' != "" ]]; then
+      COMMIT='$(System.PullRequest.SourceCommitId)'
+      echo "submitting PR commit $COMMIT ..."
+    else
+      COMMIT='$(Build.SourceVersion)'
+      echo "submitting master commit $COMMIT ..."
+    fi
+    godacov -r coverage.out -t '$(Codacy.Token)' -c "$COMMIT"; true
     bash <(curl -s https://codecov.io/bash); true
   workingDirectory: '$(modulePath)'
-  displayName: Coverage
+  displayName: 'Upload Coverage'
