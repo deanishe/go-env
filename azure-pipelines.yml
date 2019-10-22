@@ -72,7 +72,9 @@ steps:
     if [[ "$CODACY_TOKEN" == "" ]]; then
       echo "CODACY_TOKEN not set; skipping upload"
     else
-      go run github.com/schrej/godacov -r coverage.out -t "$CODACY_TOKEN" -c "$$BUILD_SOURCEVERSION"; true
+      echo "coverage hash: $( md5sum coverage.out | cut -d' ' -f1 )"
+      echo "running: go run github.com/schrej/godacov -r coverage.out -t $CODACY_TOKEN -c $BUILD_SOURCEVERSION"
+      go run github.com/schrej/godacov -r coverage.out -t $CODACY_TOKEN -c $BUILD_SOURCEVERSION; true
     fi
   workingDirectory: '$(modulePath)'
   displayName: 'Upload Coverage'
