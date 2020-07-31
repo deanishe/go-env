@@ -2,9 +2,10 @@
 go-env
 ======
 
-[![Build Status][azure-status-icon]][azure-link]
+![Build Status][github-status-icon]
 [![Go Report Card][goreport-icon]][goreport-link]
 [![Codacy coverage][coverage-icon]][codacy-link]
+[![GitHub licence][licence-icon]][licence-link]
 [![GoDoc][godoc-icon]][godoc-link]
 
 Access environment variables from Go, and populate structs from them.
@@ -175,4 +176,6 @@ This library is released under the [MIT Licence][mit].
 [codacy-link]: https://www.codacy.com/app/deanishe/go-env
 [azure-status-icon]: https://img.shields.io/azure-devops/build/deanishe/3b09feef-08fa-42bc-830e-57ce1de63779/2
 [azure-link]: https://dev.azure.com/deanishe/go-env/_build
-
+[licence-icon]: https://img.shields.io/github/license/deanishe/go-env
+[licence-link]: https://github.com/deanishe/go-env/blob/master/LICENCE.txt
+[github-status-icon]: https://img.shields.io/github/workflow/status/deanishe/go-env/Test
