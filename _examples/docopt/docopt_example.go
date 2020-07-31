@@ -29,9 +29,8 @@ import (
 	"log"
 	"strings"
 
-	env "github.com/deanishe/go-env"
-
 	docopt "github.com/docopt/docopt-go"
+	"go.deanishe.net/env"
 )
 
 var usage = `usage: docopt [options]

@@ -27,7 +27,7 @@ Access environment variables from Go, and populate structs from them.
 Usage
 -----
 
-Import path is `github.com/deanishe/go-env`, import name is `env`.
+Import path is `go.deanishe.net/env`.
 
 You can directly access environment variables, or populate your structs from them using struct tags and `env.Bind()`.
 
@@ -38,7 +38,7 @@ You can directly access environment variables, or populate your structs from the
 Read `int`, `float64`, `duration` and `string` values from environment variables, with optional fallback values for unset variables.
 
 ```go
-import "github.com/deanishe/go-env"
+import "go.deanishe.net/env"
 
 // Get value for key or return empty string
 s := env.Get("SHELL")
@@ -112,7 +112,7 @@ type Env interface {
 
 So you can pass a custom `Env` implementation to `Bind()` in order to populate structs from a source other than environment variables.
 
-See [examples/docopt][docopt] to see how to implement a custom `Env` that populates a struct from `docopt` command-line options.
+See [_examples/docopt][docopt] to see how to implement a custom `Env` that populates a struct from `docopt` command-line options.
 
 
 <a id="dumping"></a>
@@ -146,7 +146,7 @@ Installation
 ------------
 
 ```bash
-go get github.com/deanishe/go-env
+go get go.deanishe.net/env
 ```
 
 
@@ -167,10 +167,10 @@ This library is released under the [MIT Licence][mit].
 [mit]: ./LICENCE.txt
 [docopt]: _examples/docopt/docopt_example.go
 
-[godoc-icon]: https://godoc.org/github.com/deanishe/go-env?status.svg
-[godoc-link]: https://godoc.org/github.com/deanishe/go-env
-[goreport-link]: https://goreportcard.com/report/github.com/deanishe/go-env
-[goreport-icon]: https://goreportcard.com/badge/github.com/deanishe/go-env
+[godoc-icon]: https://godoc.org/go.deanishe.net/env?status.svg
+[godoc-link]: https://godoc.org/go.deanishe.net/env
+[goreport-link]: https://goreportcard.com/report/go.deanishe.net/env
+[goreport-icon]: https://goreportcard.com/badge/go.deanishe.net/env
 [coverage-icon]: https://img.shields.io/codacy/coverage/a0ebe54382ad43bf8604b6d6aac02400?color=brightgreen
 [codacy-link]: https://www.codacy.com/app/deanishe/go-env
 [azure-status-icon]: https://img.shields.io/azure-devops/build/deanishe/3b09feef-08fa-42bc-830e-57ce1de63779/2

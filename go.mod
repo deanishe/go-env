@@ -1,4 +1,4 @@
-module github.com/deanishe/go-env
+module go.deanishe.net/env
 
 go 1.13
 
