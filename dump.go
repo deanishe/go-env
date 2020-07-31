@@ -15,8 +15,7 @@ import (
 
 // sentinel error returned by toString to indicate that Dump should try
 // further methods to convert a value to a string.
-// nolint: stylecheck
-var unknownType = errors.New("unknown type")
+var errUnknownType = errors.New("unknown type")
 
 // DumpOption is a configuration option to Dump.
 type DumpOption func(d *dumper)
@@ -122,10 +121,10 @@ func (d *dumper) dump(v interface{}) (map[string]string, error) {
 		}
 
 		s, err := toString(val)
-		if err != nil && err != unknownType {
+		if err != nil && err != errUnknownType {
 			return nil, err
 		}
-		if err != unknownType {
+		if err != errUnknownType {
 			vars[key] = s
 			continue
 		}
@@ -154,7 +153,7 @@ func dumpSlice(rv reflect.Value) (string, error) {
 	for i := 0; i < rv.Len(); i++ {
 		v := rv.Index(i)
 		s, err := toString(v)
-		if err != nil && err != unknownType {
+		if err != nil && err != errUnknownType {
 			return "", err
 		}
 		values = append(values, s)
@@ -194,5 +193,5 @@ func toString(rv reflect.Value) (value string, err error) {
 	case reflect.Float64:
 		return strconv.FormatFloat(rv.Float(), 'f', -1, 64), nil
 	}
-	return "", unknownType
+	return "", errUnknownType
 }
