@@ -178,4 +178,5 @@ This library is released under the [MIT Licence][mit].
 [azure-link]: https://dev.azure.com/deanishe/go-env/_build
 [licence-icon]: https://img.shields.io/github/license/deanishe/go-env
 [licence-link]: https://github.com/deanishe/go-env/blob/master/LICENCE.txt
-[github-status-icon]: https://img.shields.io/github/workflow/status/deanishe/go-env/Test
+[github-status-link]: https://github.com/deanishe/go-env/actions?query=workflow%3ACI
+[github-status-icon]: https://github.com/deanishe/go-env/workflows/CI/badge.svg
