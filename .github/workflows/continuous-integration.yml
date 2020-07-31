@@ -1,4 +1,4 @@
-name: Test
+name: CI
 
 on:
   push:
@@ -47,3 +47,19 @@ jobs:
         run: |
           go install github.com/schrej/godacov
           godacov -r coverage.out -t ${{ secrets.CODACY_TOKEN }} -c ${{ github.sha }}
+
+      - name: Coveralls
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+          flag-name: Go-${{ matrix.go-version }}
+          parallel: true
+
+  finish:
+    name: Coveralls upload
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          parallel-finished: true
