@@ -1,7 +1,7 @@
 // Copyright (c) 2018 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 
-package env
+package env // import "go.deanishe.net/env"
 
 import (
 	"fmt"
